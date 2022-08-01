@@ -29,7 +29,6 @@ namespace Disqord.Test
                     .ConfigureAppConfiguration(x =>
                     {
                         x.AddCommandLine(args);
-                        x.AddUserSecrets(Assembly.GetEntryAssembly());
                         x.AddEnvironmentVariables("DISQORD_");
                     })
                     .ConfigureLogging(x =>
@@ -51,7 +50,6 @@ namespace Disqord.Test
                         bot.Token = context.Configuration["TOKEN"];
                         bot.UseMentionPrefix = false;
                         bot.Prefixes = new[] { "??" };
-                        bot.Intents = GatewayIntents.Unprivileged;
                     })
                     .UseDefaultServiceProvider(x =>
                     {
