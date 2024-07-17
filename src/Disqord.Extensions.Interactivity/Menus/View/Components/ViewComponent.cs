@@ -86,5 +86,5 @@ public abstract class ViewComponent
             view.HasChanges = true;
     }
 
-    protected internal abstract LocalComponent ToLocalComponent();
+    public abstract LocalComponent ToLocalComponent();
 }
