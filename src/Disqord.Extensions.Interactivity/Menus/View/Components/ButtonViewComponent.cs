@@ -61,7 +61,7 @@ public class ButtonViewComponent : InteractableViewComponent
     }
     private bool _isDisabled;
 
-    private readonly ButtonViewComponentCallback _callback;
+    public readonly ButtonViewComponentCallback _callback;
 
     public override int Width => 1;
 
