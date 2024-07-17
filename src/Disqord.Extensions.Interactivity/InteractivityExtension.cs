@@ -34,7 +34,7 @@ public class InteractivityExtension : DiscordClientExtension
     private readonly IThreadSafeDictionary<Snowflake, LinkedList<Waiter<ReactionAddedEventArgs>>> _reactionWaiters;
 
     // MessageId -> Menu
-    private readonly IThreadSafeDictionary<Snowflake, MenuBase> _menus;
+    public readonly IThreadSafeDictionary<Snowflake, MenuBase> _menus;
 
     public InteractivityExtension(
         IOptions<InteractivityExtensionConfiguration> options,
