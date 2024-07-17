@@ -131,7 +131,7 @@ public abstract class MenuBase : IAsyncDisposable
 
     private Tcs? _tcs;
     private Cts? _cts;
-    private TimeSpan _timeout;
+    public TimeSpan _timeout;
     private Timer? _timeoutTimer;
 
     private bool _isDisposed;
