@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using Qommon;
 
 namespace Disqord;
 
@@ -19,17 +20,17 @@ public static class LocalSelectionComponentOptionOptionExtensions
         return component;
     }
 
-    public static TOption WithDescription<TOption>(this TOption component, string description)
+    public static TOption WithDescription<TOption>(this TOption component, string? description)
         where TOption : LocalSelectionComponentOption
     {
-        component.Description = description;
+        component.Description = string.IsNullOrEmpty(description) ? Optional<string>.Empty : description;
         return component;
     }
 
-    public static TOption WithEmoji<TOption>(this TOption component, LocalEmoji emoji)
+    public static TOption WithEmoji<TOption>(this TOption component, LocalEmoji? emoji)
         where TOption : LocalSelectionComponentOption
     {
-        component.Emoji = emoji;
+        component.Emoji = emoji ?? Optional<LocalEmoji>.Empty;
         return component;
     }
 
