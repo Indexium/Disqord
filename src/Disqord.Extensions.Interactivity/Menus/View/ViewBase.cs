@@ -37,7 +37,7 @@ public abstract partial class ViewBase : IAsyncDisposable
     /// <summary>
     ///     Gets whether this view has changes.
     /// </summary>
-    public bool HasChanges { get; internal set; }
+    public bool HasChanges { get; set; }
 
     /// <summary>
     ///     Gets or sets the message template of this view.
@@ -56,7 +56,7 @@ public abstract partial class ViewBase : IAsyncDisposable
         }
     }
 
-    private readonly List<ViewComponent>[] _rows;
+    private List<ViewComponent>[] _rows;
     private readonly IThreadSafeDictionary<string, InteractableViewComponent> _interactables;
     private Action<LocalMessageBase>? _messageTemplate;
 
@@ -129,9 +129,7 @@ public abstract partial class ViewBase : IAsyncDisposable
             if (component is InteractableViewComponent interactableComponent)
             {
                 var customId = GetCustomId(interactableComponent);
-                if (!_interactables.TryAdd(customId, interactableComponent))
-                    throw new ArgumentException($"A component with the custom ID '{customId}' has already been added.", nameof(component));
-
+                if (!_interactables.TryAdd(customId, interactableComponent)) return;
                 interactableComponent.CustomId = customId;
             }
 
