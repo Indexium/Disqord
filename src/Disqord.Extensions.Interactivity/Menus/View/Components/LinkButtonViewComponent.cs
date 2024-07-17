@@ -71,7 +71,7 @@ public class LinkButtonViewComponent : ViewComponent
         _isDisabled = attribute.IsDisabled;
     }
 
-    protected internal override LocalComponent ToLocalComponent()
+    public override LocalComponent ToLocalComponent()
     {
         var button = new LocalLinkButtonComponent
         {
