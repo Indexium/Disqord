@@ -56,7 +56,7 @@ public abstract partial class ViewBase : IAsyncDisposable
         }
     }
 
-    private List<ViewComponent>[] _rows;
+    public List<ViewComponent>[] _rows;
     private readonly IThreadSafeDictionary<string, InteractableViewComponent> _interactables;
     private Action<LocalMessageBase>? _messageTemplate;
 
