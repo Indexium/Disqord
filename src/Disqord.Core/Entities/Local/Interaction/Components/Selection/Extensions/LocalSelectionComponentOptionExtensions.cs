@@ -23,7 +23,7 @@ public static class LocalSelectionComponentOptionOptionExtensions
     public static TOption WithDescription<TOption>(this TOption component, string? description)
         where TOption : LocalSelectionComponentOption
     {
-        component.Description = string.IsNullOrEmpty(description) ? Optional<string>.Empty : description;
+        component.Description = string.IsNullOrWhiteSpace(description) ? Optional<string>.Empty : description;
         return component;
     }
 
