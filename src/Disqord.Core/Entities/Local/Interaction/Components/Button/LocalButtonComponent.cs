@@ -10,7 +10,7 @@ public class LocalButtonComponent : LocalButtonComponentBase, ILocalCustomIdenti
     /// <remarks>
     ///     This property is required.
     /// </remarks>
-    public Optional<LocalButtonComponentStyle> Style { get; set; } = LocalButtonComponentStyle.Primary;
+    public Optional<LocalButtonComponentStyle> Style { get; set; } = LocalButtonComponentStyle.Secondary;
 
     /// <inheritdoc/>
     public Optional<string> CustomId { get; set; }
