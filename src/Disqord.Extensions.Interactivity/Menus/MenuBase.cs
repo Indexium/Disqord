@@ -100,7 +100,7 @@ public abstract class MenuBase : IAsyncDisposable
     /// <summary>
     ///     Gets or sets whether this menu has changes.
     /// </summary>
-    public bool HasChanges { get; protected set; }
+    public bool HasChanges { get; set; }
 
     /// <summary>
     ///     Gets or sets the view of this menu.
