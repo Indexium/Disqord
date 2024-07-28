@@ -39,7 +39,7 @@ public sealed class SelectionEventArgs : ViewComponentEventArgs
             return _selectedOptions = selectedOptions;
         }
     }
-    private IReadOnlyList<LocalSelectionComponentOption>? _selectedOptions;
+    public IReadOnlyList<LocalSelectionComponentOption>? _selectedOptions;
 
     public IReadOnlyList<ISnowflakeEntity> SelectedEntities
     {
