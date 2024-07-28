@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Reflection;
 using Newtonsoft.Json;
 using Qommon.Serialization;
 
@@ -23,18 +20,9 @@ internal sealed class OptionalConverter : JsonConverter
         return true;
     }
 
-    private static readonly ConcurrentDictionary<Type, ConstructorInfo> _cache =
-        new ConcurrentDictionary<Type, ConstructorInfo>();
-
     public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
-        var constructor = _cache.GetOrAdd(objectType, t => t.GetConstructors().First());
-
-        var genericType = objectType.GenericTypeArguments.FirstOrDefault();
-        if (genericType == null)
-            throw new InvalidOperationException($"No generic type arguments found for type {objectType.Name}");
-
-        return constructor.Invoke([serializer.Deserialize(reader, genericType)]);
+        return objectType.GetConstructors()[0].Invoke(new[] { serializer.Deserialize(reader, objectType.GenericTypeArguments[0]) });
     }
 
     public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
