@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Newtonsoft.Json.Linq;
 
 namespace Disqord.Serialization.Json.System;
 
 /// <summary>
 ///     Represents a default JSON array node.
-///     Wraps a <see cref="JArray"/>.
+///     Wraps a <see cref="JsonArray"/>.
 /// </summary>
-public class SystemJsonArray : SystemJsonNode, IJsonArray
+internal sealed class SystemJsonArray : SystemJsonNode, IJsonArray
 {
     /// <inheritdoc cref="Token"/>
     public new JsonArray Node => (base.Node as JsonArray)!;
@@ -27,7 +26,7 @@ public class SystemJsonArray : SystemJsonNode, IJsonArray
 
     bool ICollection<IJsonNode?>.IsReadOnly => false;
 
-    public SystemJsonArray(JsonArray node, JsonSerializerOptions options)
+    internal SystemJsonArray(JsonArray node, JsonSerializerOptions options)
         : base(node, options)
     { }
 

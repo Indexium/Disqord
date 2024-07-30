@@ -1,71 +1,90 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Logging;
 
 namespace Disqord.Serialization.Json.System;
 
-public class SystemJsonSerializer : IJsonSerializer
+/// <summary>
+///     Represents a System.Text.Json implementation of <see cref="IJsonSerializer"/>.
+/// </summary>
+public sealed class SystemJsonSerializer : IJsonSerializer
 {
-    public ILogger Logger { get; }
-
     /// <summary>
     ///     Gets the underlying <see cref="JsonSerializerOptions"/>.
     /// </summary>
-    public JsonSerializerOptions UnderlyingOptions { get; }
+    internal JsonSerializerOptions UnderlyingOptions { get; }
 
-    public SystemJsonSerializer(ILogger<SystemJsonSerializer> logger)
+    public SystemJsonSerializer()
     {
-        Logger = logger;
         UnderlyingOptions = new JsonSerializerOptions
         {
             NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
             IncludeFields = true,
             IgnoreReadOnlyFields = true,
             IgnoreReadOnlyProperties = true,
+            RespectNullableAnnotations = true,
+            NewLine = "\n",
             TypeInfoResolver = new JsonTypeInfoResolver(),
-            Converters = { new EnumConverter(), new SnowflakeConverter(), new StreamConverter() }
+            Converters =
+            {
+                new EnumConverter(),
+                new JsonNodeConverter(),
+                new NullableConverter(),
+                new OptionalConverter(),
+                new StringConverter(),
+                new SnowflakeConverter(),
+                new StreamConverter()
+            }
         };
+
+        UnderlyingOptions.MakeReadOnly();
     }
 
-    //TODO create async version
+    /// <inheritdoc/>
     public object? Deserialize(Stream stream, Type type)
     {
         try
         {
             return JsonSerializer.Deserialize(stream, type, UnderlyingOptions);
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            throw new JsonSerializationException(true, type, ex);
+            ThrowSerializationException(isDeserialize: true, type, ex);
+            return null;
         }
     }
 
-    //TODO create async version
+    /// <inheritdoc/>
     public void Serialize(Stream stream, object obj, IJsonSerializerOptions? options = null)
     {
         try
         {
+            var serializerOptions = UnderlyingOptions;
             if (options != null && options.Formatting == JsonFormatting.Indented)
             {
-                var serializerOptions = new JsonSerializerOptions(UnderlyingOptions);
+                serializerOptions = new JsonSerializerOptions(UnderlyingOptions);
                 serializerOptions.WriteIndented = true;
-                JsonSerializer.Serialize(stream, obj, serializerOptions);
             }
-            else
-            {
-                JsonSerializer.Serialize(stream, obj, UnderlyingOptions);
-            }
+
+            JsonSerializer.Serialize(stream, obj, serializerOptions);
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            throw new JsonSerializationException(false, obj.GetType(), ex);
+            ThrowSerializationException(isDeserialize: false, obj.GetType(), ex);
         }
     }
 
-    public IJsonNode GetJsonNode(object? obj)
+    /// <inheritdoc/>
+    [return: NotNullIfNotNull(nameof(obj))]
+    public IJsonNode? GetJsonNode(object? obj)
     {
-        return SystemJsonNode.Create(obj, UnderlyingOptions)!;
+        return SystemJsonNode.Create(obj, UnderlyingOptions);
+    }
+
+    internal static void ThrowSerializationException(bool isDeserialize, Type type, Exception exception)
+    {
+        throw new JsonSerializationException(isDeserialize, type, exception);
     }
 }
