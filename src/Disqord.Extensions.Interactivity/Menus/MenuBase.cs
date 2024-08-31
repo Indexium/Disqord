@@ -65,7 +65,7 @@ public abstract class MenuBase : IAsyncDisposable
     /// <remarks>
     ///     <inheritdoc cref="Interactivity"/>
     /// </remarks>
-    public Snowflake MessageId { get; internal set; }
+    public Snowflake MessageId { get; set; }
 
     /// <summary>
     ///     Gets the stopping token.
