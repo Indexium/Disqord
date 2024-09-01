@@ -80,10 +80,10 @@ public static partial class Discord
 
     public static readonly Regex MessageJumpLinkRegex = new(@"^https?://(?:(ptb|canary)\.)?discord(?:app)?\.com/channels/(?<guild_id>([0-9]{15,21})|(@me))/(?<channel_id>[0-9]{15,21})/(?<message_id>[0-9]{15,21})/?$");
 
-    public static string MessageJumpLink(Snowflake? guildId, Snowflake channelId, Snowflake messageId)
+    public static string MessageJumpLink(Snowflake? guildId, Snowflake channelId, Snowflake? messageId = null)
     {
         return guildId != null
-            ? $"https://discord.com/channels/{guildId}/{channelId}/{messageId}"
-            : $"https://discord.com/channels/@me/{channelId}/{messageId}";
+            ? $"https://discord.com/channels/{guildId}/{channelId}" + (messageId != null ? $"/{messageId}" : string.Empty)
+            : $"https://discord.com/channels/@me/{channelId}" + (messageId != null ? $"/{messageId}" : string.Empty);
     }
 }
