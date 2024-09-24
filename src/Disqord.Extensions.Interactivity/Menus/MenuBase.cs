@@ -52,6 +52,14 @@ public abstract class MenuBase : IAsyncDisposable
     public DiscordClientBase Client => Interactivity.Client;
 
     /// <summary>
+    ///     Gets the ID of the guild this menu is bound to.
+    /// </summary>
+    /// <remarks>
+    ///     <inheritdoc cref="Interactivity"/>
+    /// </remarks>
+    public Snowflake? GuildId { get; internal set; }
+
+    /// <summary>
     ///     Gets the ID of the channel this menu is bound to.
     /// </summary>
     /// <remarks>
