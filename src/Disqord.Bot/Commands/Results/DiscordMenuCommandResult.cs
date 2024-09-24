@@ -23,11 +23,11 @@ public class DiscordMenuCommandResult : DiscordCommandResult<IDiscordCommandCont
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override TaskAwaiter GetAwaiter()
     {
-        return Context.Bot.RunMenuAsync(Context.ChannelId, Menu, Timeout).GetAwaiter();
+        return Context.Bot.RunMenuAsync(Context.GuildId, Context.ChannelId, Menu, Timeout).GetAwaiter();
     }
 
     public override Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        return Context.Bot.StartMenuAsync(Context.ChannelId, Menu, Timeout, cancellationToken: cancellationToken);
+        return Context.Bot.StartMenuAsync(Context.GuildId, Context.ChannelId, Menu, Timeout, cancellationToken: cancellationToken);
     }
 }
