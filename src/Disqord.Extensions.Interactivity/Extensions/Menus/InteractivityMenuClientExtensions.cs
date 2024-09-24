@@ -10,7 +10,7 @@ public static class InteractivityMenuClientExtensions
 {
     /// <inheritdoc cref="InteractivityExtension.StartMenuAsync"/>
     public static Task StartMenuAsync(this DiscordClientBase client,
-        Snowflake guildId, Snowflake channelId, MenuBase menu,
+        Snowflake? guildId, Snowflake channelId, MenuBase menu,
         TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         var extension = client.GetInteractivity();
@@ -19,7 +19,7 @@ public static class InteractivityMenuClientExtensions
 
     /// <inheritdoc cref="InteractivityExtension.RunMenuAsync"/>
     public static Task RunMenuAsync(this DiscordClientBase client,
-        Snowflake guildId, Snowflake channelId, MenuBase menu,
+        Snowflake? guildId, Snowflake channelId, MenuBase menu,
         TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         var extension = client.GetInteractivity();
