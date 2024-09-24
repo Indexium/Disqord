@@ -167,11 +167,11 @@ public class InteractivityExtension : DiscordClientExtension
     /// <returns>
     ///     A <see cref="Task{TResult}"/> representing the start.
     /// </returns>
-    public async Task StartMenuAsync(Snowflake channelId, MenuBase menu,
+    public async Task StartMenuAsync(Snowflake? guildId, Snowflake channelId, MenuBase menu,
         TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
-        await InternalStartMenuAsync(channelId, menu, timeout, cancellationToken).ConfigureAwait(false);
-        _ = RunMenuAsync(channelId, menu, timeout, cancellationToken);
+        await InternalStartMenuAsync(guildId, channelId, menu, timeout, cancellationToken).ConfigureAwait(false);
+        _ = RunMenuAsync(guildId, channelId, menu, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,13 +185,13 @@ public class InteractivityExtension : DiscordClientExtension
     /// <returns>
     ///     A <see cref="Task{TResult}"/> representing the run.
     /// </returns>
-    public async Task RunMenuAsync(Snowflake channelId, MenuBase menu,
+    public async Task RunMenuAsync(Snowflake? guildId, Snowflake channelId, MenuBase menu,
         TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(menu);
 
         if (!menu.IsRunning)
-            await InternalStartMenuAsync(channelId, menu, timeout, cancellationToken).ConfigureAwait(false);
+            await InternalStartMenuAsync(guildId, channelId, menu, timeout, cancellationToken).ConfigureAwait(false);
 
         try
         {
@@ -208,7 +208,7 @@ public class InteractivityExtension : DiscordClientExtension
         }
     }
 
-    private async Task InternalStartMenuAsync(Snowflake channelId, MenuBase menu,
+    private async Task InternalStartMenuAsync(Snowflake? guildId, Snowflake channelId, MenuBase menu,
         TimeSpan timeout, CancellationToken cancellationToken)
     {
         timeout = timeout != default
@@ -217,6 +217,7 @@ public class InteractivityExtension : DiscordClientExtension
 
         menu.Interactivity = this;
         menu.ChannelId = channelId;
+        menu.GuildId = guildId;
         try
         {
             menu.MessageId = await menu.InitializeAsync(cancellationToken).ConfigureAwait(false);
