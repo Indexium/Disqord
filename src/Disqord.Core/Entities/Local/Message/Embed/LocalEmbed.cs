@@ -84,7 +84,7 @@ public class LocalEmbed : ILocalConstruct<LocalEmbed>, IJsonConvertible<EmbedJso
     ///     Instantiates a new <see cref="LocalEmbed"/> with the properties copied from another instance.
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
-    protected LocalEmbed(LocalEmbed other)
+    public LocalEmbed(LocalEmbed other)
     {
         Title = other.Title;
         Description = other.Description;
