@@ -35,7 +35,7 @@ public abstract partial class DiscordBotBase
         { }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "An exception occurred while executing the {0} callback.", nameof(OnFailedResult));
+            Logger.LogError(ex, $"{context.Command?.Name} An exception occurred while executing the {0} callback.", nameof(OnFailedResult));
         }
     }
 
@@ -49,7 +49,7 @@ public abstract partial class DiscordBotBase
         { }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "An exception occurred while executing the {0} callback.", nameof(OnCommandResult));
+            Logger.LogError(ex, $"{context.Command?.Name} An exception occurred while executing the {0} callback.", nameof(OnCommandResult));
         }
     }
 
