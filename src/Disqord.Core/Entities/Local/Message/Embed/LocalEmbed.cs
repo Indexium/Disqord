@@ -69,7 +69,7 @@ public class LocalEmbed : ILocalConstruct<LocalEmbed>, IJsonConvertible<EmbedJso
             var descriptionLength = Description.GetValueOrDefault()?.Length ?? 0;
             var footerLength = Footer.GetValueOrDefault()?.Length ?? 0;
             var authorLength = Author.GetValueOrDefault()?.Length ?? 0;
-            var fieldsLength = Fields.GetValueOrDefault()?.Sum(field => field.Length) ?? 0;
+            var fieldsLength = Fields.GetValueOrDefault()?.Sum(embedField => embedField.Length) ?? 0;
             return titleLength + descriptionLength + footerLength + authorLength + fieldsLength;
         }
     }
