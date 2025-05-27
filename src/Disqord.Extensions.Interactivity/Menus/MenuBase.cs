@@ -298,7 +298,7 @@ public abstract class MenuBase : IAsyncDisposable
                     {
                         message.Content = localMessage.Content;
                         message.Embeds = Optional.Convert(localMessage.Embeds, embeds => embeds as IEnumerable<LocalEmbed>);
-                        message.Components = Optional.Convert(localMessage.Components, components => components as IEnumerable<LocalRowComponent>);
+                        message.Components = Optional.Convert(localMessage.Components, components => components as IEnumerable<LocalComponent>);
                         message.AllowedMentions = localMessage.AllowedMentions;
                     }, cancellationToken: StoppingToken).ConfigureAwait(false);
                 }
@@ -323,7 +323,7 @@ public abstract class MenuBase : IAsyncDisposable
                         {
                             message.Content = localMessage.Content;
                             message.Embeds = Optional.Convert(localMessage.Embeds, embeds => embeds as IEnumerable<LocalEmbed>);
-                            message.Components = Optional.Convert(localMessage.Components, components => components as IEnumerable<LocalRowComponent>);
+                            message.Components = Optional.Convert(localMessage.Components, components => components as IEnumerable<LocalComponent>);
                             message.AllowedMentions = localMessage.AllowedMentions;
                         }, cancellationToken: StoppingToken).ConfigureAwait(false);
                     }
