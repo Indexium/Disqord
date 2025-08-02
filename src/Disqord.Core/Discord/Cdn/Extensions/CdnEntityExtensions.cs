@@ -12,9 +12,7 @@ public static class CdnEntityExtensions
 
         if (format == CdnAssetFormat.Automatic)
         {
-            format = emoji.IsAnimated
-                ? CdnAssetFormat.Gif
-                : CdnAssetFormat.Png;
+            format = CdnAssetFormat.WebP;
         }
 
         return Discord.Cdn.GetCustomEmojiUrl(emoji.Id, format, size);
@@ -166,3 +164,4 @@ public static class CdnEntityExtensions
         return Discord.Cdn.GetStickerUrl(sticker.Id, sticker.FormatType);
     }
 }
+
