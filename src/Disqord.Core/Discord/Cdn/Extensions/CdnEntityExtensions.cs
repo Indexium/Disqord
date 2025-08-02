@@ -17,7 +17,7 @@ public static class CdnEntityExtensions
 
         var url = Discord.Cdn.GetCustomEmojiUrl(emoji.Id, format, size);
     
-        if (emoji.IsAnimated)
+        if (format is CdnAssetFormat.WebP)
         {
             var separator = url.Contains('?') ? "&" : "?";
             url += $"{separator}animated=true";
@@ -172,5 +172,6 @@ public static class CdnEntityExtensions
         return Discord.Cdn.GetStickerUrl(sticker.Id, sticker.FormatType);
     }
 }
+
 
 
