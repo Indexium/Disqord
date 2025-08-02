@@ -15,7 +15,15 @@ public static class CdnEntityExtensions
             format = CdnAssetFormat.WebP;
         }
 
-        return Discord.Cdn.GetCustomEmojiUrl(emoji.Id, format, size);
+        var url = Discord.Cdn.GetCustomEmojiUrl(emoji.Id, format, size);
+    
+        if (emoji.IsAnimated)
+        {
+            var separator = url.Contains('?') ? "&" : "?";
+            url += $"{separator}animated=true";
+        }
+    
+        return url;
     }
 
     public static string? GetIconUrl(this IGuild guild, CdnAssetFormat format = default, int? size = null)
@@ -164,4 +172,5 @@ public static class CdnEntityExtensions
         return Discord.Cdn.GetStickerUrl(sticker.Id, sticker.FormatType);
     }
 }
+
 
