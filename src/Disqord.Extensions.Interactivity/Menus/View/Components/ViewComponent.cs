@@ -5,7 +5,7 @@ namespace Disqord.Extensions.Interactivity.Menus;
 
 public abstract class ViewComponent
 {
-    public ViewBase? View { get; internal set; }
+    public ViewBase? View { get; set; }
 
     /// <summary>
     ///     Gets or sets the zero-indexed row the component should appear on.
@@ -88,3 +88,4 @@ public abstract class ViewComponent
 
     public abstract LocalComponent ToLocalComponent();
 }
+
