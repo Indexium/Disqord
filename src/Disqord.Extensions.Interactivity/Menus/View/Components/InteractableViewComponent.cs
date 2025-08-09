@@ -5,7 +5,7 @@ namespace Disqord.Extensions.Interactivity.Menus;
 
 public abstract class InteractableViewComponent : ViewComponent
 {
-    public string CustomId { get; internal set; } = null!;
+    public string CustomId { get; set; } = null!;
 
     protected InteractableViewComponent()
     { }
@@ -15,4 +15,5 @@ public abstract class InteractableViewComponent : ViewComponent
     { }
 
     protected internal abstract ValueTask ExecuteAsync(InteractionReceivedEventArgs e);
+
 }
