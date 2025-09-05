@@ -30,7 +30,7 @@ public abstract partial class ViewBase : IAsyncDisposable
 
             return _menu;
         }
-        internal set => _menu = value;
+        set => _menu = value;
     }
     internal MenuBase? _menu;
 
@@ -301,4 +301,5 @@ public abstract partial class ViewBase : IAsyncDisposable
         return default;
     }
 }
+
 
