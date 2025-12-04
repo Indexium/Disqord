@@ -44,7 +44,7 @@ internal sealed class ComponentConverter : PolymorphicJsonConverter<BaseComponen
             ComponentType.File => typeof(FileComponentJsonModel),
             ComponentType.Separator => typeof(SeparatorComponentJsonModel),
             ComponentType.Container => typeof(ContainerComponentJsonModel),
-            _ => typeof(BaseComponentJsonModel)
+            _ => typeof(UnknownComponentJsonModel)
         };
     }
 
