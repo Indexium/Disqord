@@ -12,7 +12,7 @@ public class BaseComponentJsonModel : JsonModel
     public Optional<int> Id;
 }
 
-public class UnknownComponentJsonModel : JsonModel
+public class UnknownComponentJsonModel : BaseComponentJsonModel
 {
     
 }
