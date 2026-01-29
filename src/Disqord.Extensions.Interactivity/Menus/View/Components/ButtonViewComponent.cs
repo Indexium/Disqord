@@ -37,7 +37,7 @@ public class ButtonViewComponent : InteractableViewComponent
             ReportChanges();
         }
     }
-    private LocalButtonComponentStyle _style = LocalButtonComponentStyle.Primary;
+    private LocalButtonComponentStyle _style = LocalButtonComponentStyle.Secondary;
 
     public LocalEmoji? Emoji
     {
@@ -61,7 +61,7 @@ public class ButtonViewComponent : InteractableViewComponent
     }
     private bool _isDisabled;
 
-    private readonly ButtonViewComponentCallback _callback;
+    public readonly ButtonViewComponentCallback _callback;
 
     public override int Width => 1;
 
@@ -91,7 +91,7 @@ public class ButtonViewComponent : InteractableViewComponent
         return _callback(data);
     }
 
-    protected internal override LocalComponent ToLocalComponent()
+    public override LocalComponent ToLocalComponent()
     {
         var button = new LocalButtonComponent
         {

@@ -52,6 +52,14 @@ public abstract class MenuBase : IAsyncDisposable
     public DiscordClientBase Client => Interactivity.Client;
 
     /// <summary>
+    ///     Gets the ID of the guild this menu is bound to.
+    /// </summary>
+    /// <remarks>
+    ///     <inheritdoc cref="Interactivity"/>
+    /// </remarks>
+    public Snowflake? GuildId { get; internal set; }
+
+    /// <summary>
     ///     Gets the ID of the channel this menu is bound to.
     /// </summary>
     /// <remarks>
@@ -65,7 +73,7 @@ public abstract class MenuBase : IAsyncDisposable
     /// <remarks>
     ///     <inheritdoc cref="Interactivity"/>
     /// </remarks>
-    public Snowflake MessageId { get; internal set; }
+    public Snowflake MessageId { get; set; }
 
     /// <summary>
     ///     Gets the stopping token.
@@ -100,7 +108,7 @@ public abstract class MenuBase : IAsyncDisposable
     /// <summary>
     ///     Gets or sets whether this menu has changes.
     /// </summary>
-    public bool HasChanges { get; protected set; }
+    public bool HasChanges { get; set; }
 
     /// <summary>
     ///     Gets or sets the view of this menu.
@@ -131,7 +139,7 @@ public abstract class MenuBase : IAsyncDisposable
 
     private Tcs? _tcs;
     private Cts? _cts;
-    private TimeSpan _timeout;
+    public TimeSpan _timeout;
     private Timer? _timeoutTimer;
 
     private bool _isDisposed;

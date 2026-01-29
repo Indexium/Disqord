@@ -121,7 +121,7 @@ public class SelectionViewComponent : InteractableViewComponent
     }
     private bool _isDisabled;
 
-    private readonly SelectionViewComponentCallback _callback;
+    public readonly SelectionViewComponentCallback _callback;
 
     public override int Width => 5;
 
@@ -179,7 +179,7 @@ public class SelectionViewComponent : InteractableViewComponent
         return _callback(data);
     }
 
-    protected internal override LocalComponent ToLocalComponent()
+    public override LocalComponent ToLocalComponent()
     {
         var selection = new LocalSelectionComponent
         {

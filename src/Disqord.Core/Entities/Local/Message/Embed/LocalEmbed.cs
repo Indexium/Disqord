@@ -69,7 +69,7 @@ public class LocalEmbed : ILocalConstruct<LocalEmbed>, IJsonConvertible<EmbedJso
             var descriptionLength = Description.GetValueOrDefault()?.Length ?? 0;
             var footerLength = Footer.GetValueOrDefault()?.Length ?? 0;
             var authorLength = Author.GetValueOrDefault()?.Length ?? 0;
-            var fieldsLength = Fields.GetValueOrDefault()?.Sum(static @field => @field.Length) ?? 0;
+            var fieldsLength = Fields.GetValueOrDefault()?.Sum(static embedField => embedField.Length) ?? 0;
             return titleLength + descriptionLength + footerLength + authorLength + fieldsLength;
         }
     }
@@ -84,7 +84,7 @@ public class LocalEmbed : ILocalConstruct<LocalEmbed>, IJsonConvertible<EmbedJso
     ///     Instantiates a new <see cref="LocalEmbed"/> with the properties copied from another instance.
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
-    protected LocalEmbed(LocalEmbed other)
+    public LocalEmbed(LocalEmbed other)
     {
         Title = other.Title;
         Description = other.Description;
@@ -173,3 +173,4 @@ public class LocalEmbed : ILocalConstruct<LocalEmbed>, IJsonConvertible<EmbedJso
         return builder;
     }
 }
+

@@ -11,3 +11,8 @@ public class BaseComponentJsonModel : JsonModel
     [JsonProperty("id")]
     public Optional<int> Id;
 }
+
+public class UnknownComponentJsonModel : BaseComponentJsonModel
+{
+    
+}

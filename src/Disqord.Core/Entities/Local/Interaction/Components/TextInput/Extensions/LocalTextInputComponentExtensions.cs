@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using Qommon;
 
 namespace Disqord;
 
@@ -42,10 +43,10 @@ public static class LocalTextInputComponentExtensions
         return textInput;
     }
 
-    public static TComponent WithPrefilledValue<TComponent>(this TComponent textInput, string value)
+    public static TComponent WithPrefilledValue<TComponent>(this TComponent textInput, string? value)
         where TComponent : LocalTextInputComponent
     {
-        textInput.PrefilledValue = value;
+        textInput.PrefilledValue = string.IsNullOrWhiteSpace(value) ? Optional<string>.Empty : value;
         return textInput;
     }
 
