@@ -191,6 +191,9 @@ public class SelectionViewComponent : InteractableViewComponent
             IsDisabled = _isDisabled,
         };
 
+        if(selection.MaximumSelectedOptions.HasValue && selection.MaximumSelectedOptions.Value > Options.Count)
+            selection.MaximumSelectedOptions = Math.Min(Options.Count, 25);
+
         if (_type is SelectionComponentType.Channel or SelectionComponentType.Mentionable
             && _channelTypes.Count > 0)
         {
@@ -205,3 +208,4 @@ public class SelectionViewComponent : InteractableViewComponent
         return selection;
     }
 }
+
