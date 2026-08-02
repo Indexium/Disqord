@@ -32,6 +32,14 @@ public static partial class RestEntityExtensions
         return client.ModifyStageChannelAsync(channel.Id, action, options, cancellationToken);
     }
 
+    public static Task SetStatusAsync(this IVoiceChannel channel,
+        string? status,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var client = channel.GetRestClient();
+        return client.SetVoiceChannelStatusAsync(channel.Id, status, options, cancellationToken);
+    }
+
     public static Task<IForumChannel> ModifyAsync(this IForumChannel channel,
         Action<ModifyForumChannelActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
@@ -218,11 +226,11 @@ public static partial class RestEntityExtensions
     }
 
     public static Task<IInvite> CreateInviteAsync(this IGuildChannel channel,
-        TimeSpan maxAge = default, int maxUses = 0, bool isTemporaryMembership = false, bool isUnique = false,
+        TimeSpan maxAge = default, int maxUses = 0, bool isTemporaryMembership = false, bool isUnique = false, IEnumerable<Snowflake>? roleIds = null, IEnumerable<Snowflake>? targetUsers = null,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         var client = channel.GetRestClient();
-        return client.CreateInviteAsync(channel.Id, maxAge, maxUses, isTemporaryMembership, isUnique, options, cancellationToken);
+        return client.CreateInviteAsync(channel.Id, maxAge, maxUses, isTemporaryMembership, isUnique, roleIds, targetUsers, options, cancellationToken);
     }
 
     public static Task<IFollowedChannel> FollowAsync(this ITextChannel channel,
@@ -475,5 +483,52 @@ public static partial class RestEntityExtensions
     {
         var client = channel.GetRestClient();
         return client.EndPollAsync(channel.Id, messageId, options, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Enumerates messages matching the search criteria in the guild this channel belongs to.
+    /// </summary>
+    /// <remarks>
+    ///     This overwrites <see cref="LocalMessageSearch.ChannelIds"/> to restrict results to this channel
+    ///     and overwrites <see cref="LocalMessageSearch.IncludesAgeRestrictedChannels"/> based on <see cref="IAgeRestrictableChannel.IsAgeRestricted"/>.
+    /// </remarks>
+    /// <inheritdoc cref="RestClientExtensions.EnumerateMessageSearches"/>
+    public static IAsyncEnumerable<IMessageSearchResponse> EnumerateMessageSearches(this IMessageGuildChannel channel,
+        LocalMessageSearch search, int limit,
+        MessageSearchSortMode sortBy = MessageSearchSortMode.Timestamp,
+        MessageSearchSortOrder sortOrder = MessageSearchSortOrder.Descending,
+        Snowflake? afterId = null, Snowflake? beforeId = null,
+        bool waitUntilIndexReady = false,
+        IRestRequestOptions? options = null)
+    {
+        search.ChannelIds = new[] { channel.Id };
+        search.IncludesAgeRestrictedChannels = (channel as IAgeRestrictableChannel)?.IsAgeRestricted ?? false;
+
+        var client = channel.GetRestClient();
+        return client.EnumerateMessageSearches(channel.GuildId, search, limit, sortBy, sortOrder, afterId, beforeId, waitUntilIndexReady, options);
+    }
+
+    /// <summary>
+    ///     Searches for messages matching the search criteria in the guild this channel belongs to.
+    /// </summary>
+    /// <remarks>
+    ///     This overwrites <see cref="LocalMessageSearch.ChannelIds"/> to restrict results to this channel
+    ///     and overwrites <see cref="LocalMessageSearch.IncludesAgeRestrictedChannels"/> based on <see cref="IAgeRestrictableChannel.IsAgeRestricted"/>.
+    /// </remarks>
+    /// <inheritdoc cref="RestClientExtensions.SearchMessagesAsync"/>
+    public static Task<IMessageSearchResponse> SearchMessagesAsync(this IMessageGuildChannel channel,
+        LocalMessageSearch search,
+        int limit = Discord.Limits.Rest.SearchMessagesPageSize,
+        MessageSearchSortMode sortBy = MessageSearchSortMode.Timestamp,
+        MessageSearchSortOrder sortOrder = MessageSearchSortOrder.Descending,
+        Snowflake? afterId = null, Snowflake? beforeId = null,
+        bool waitUntilIndexReady = false,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        search.ChannelIds = new[] { channel.Id };
+        search.IncludesAgeRestrictedChannels = (channel as IAgeRestrictableChannel)?.IsAgeRestricted ?? false;
+
+        var client = channel.GetRestClient();
+        return client.SearchMessagesAsync(channel.GuildId, search, limit, sortBy, sortOrder, afterId, beforeId, waitUntilIndexReady, options, cancellationToken);
     }
 }

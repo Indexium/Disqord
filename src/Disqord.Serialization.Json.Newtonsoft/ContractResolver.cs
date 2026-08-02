@@ -23,6 +23,9 @@ internal sealed class ContractResolver : DefaultContractResolver
     private readonly JsonNodeConverter _jsonNodeConverter;
     private readonly SnowflakeConverter _snowflakeConverter;
     private readonly JsonConverter _componentConverter;
+    private readonly JsonConverter _interactionConverter;
+    private readonly JsonConverter _messageInteractionMetadataConverter;
+    private readonly JsonConverter _modalComponentConverter;
     private readonly JsonConverter _unfurledMediaItemConverter;
 
     private readonly IThreadSafeDictionary<Type, JsonConverter> _snowflakeDictionaryConverters;
@@ -36,6 +39,9 @@ internal sealed class ContractResolver : DefaultContractResolver
         _jsonNodeConverter = new JsonNodeConverter();
         _snowflakeConverter = new SnowflakeConverter();
         _componentConverter = new ComponentConverter();
+        _interactionConverter = new InteractionConverter();
+        _messageInteractionMetadataConverter = new MessageInteractionMetadataConverter();
+        _modalComponentConverter = new ModalComponentConverter();
         _unfurledMediaItemConverter = new UnfurledMediaItemConverter();
         _snowflakeDictionaryConverters = ThreadSafeDictionary.ConcurrentDictionary.Create<Type, JsonConverter>();
         _optionalConverters = ThreadSafeDictionary.ConcurrentDictionary.Create<Type, JsonConverter>();
@@ -159,11 +165,20 @@ internal sealed class ContractResolver : DefaultContractResolver
         if (typeof(IJsonNode).IsAssignableFrom(type) && !typeof(JsonModel).IsAssignableFrom(type))
             return _jsonNodeConverter;
 
+        if (typeof(ModalBaseComponentJsonModel).IsAssignableFrom(type))
+            return _modalComponentConverter;
+
         if (typeof(BaseComponentJsonModel).IsAssignableFrom(type))
             return _componentConverter;
 
         if (typeof(UnfurledMediaItemJsonModel) == type)
             return _unfurledMediaItemConverter;
+
+        if (typeof(InteractionJsonModel) == type)
+            return _interactionConverter;
+
+        if (typeof(MessageInteractionMetadataJsonModel) == type)
+            return _messageInteractionMetadataConverter;
 
         if (!type.IsClass)
         {

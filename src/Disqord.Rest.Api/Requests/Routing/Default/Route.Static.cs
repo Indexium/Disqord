@@ -52,6 +52,8 @@ public sealed partial class Route
 
         public static readonly Route ModifyChannel = Patch("channels/{0:channel_id}");
 
+        public static readonly Route SetVoiceChannelStatus = Put("channels/{0:channel_id}/voice-status");
+
         public static readonly Route DeleteChannel = Delete("channels/{0:channel_id}");
 
         public static readonly Route GetMessages = Get("channels/{0:channel_id}/messages");
@@ -96,7 +98,7 @@ public sealed partial class Route
 
         public static readonly Route PinMessage = Put("channels/{0:channel_id}/messages/pins/{1:message_id}");
 
-        public static readonly Route UnpinMessage = Delete("channels/{0:channel_id}}/messages/pins/{1:message_id}");
+        public static readonly Route UnpinMessage = Delete("channels/{0:channel_id}/messages/pins/{1:message_id}");
 
         public static readonly Route StartThreadFromMessage = Post("channels/{0:channel_id}/messages/{1:message_id}/threads");
 
@@ -213,6 +215,8 @@ public sealed partial class Route
 
         public static readonly Route GetRoles = Get("guilds/{0:guild_id}/roles");
 
+        public static readonly Route GetRoleMemberCounts = Get("guilds/{0:guild_id}/roles/member-counts");
+
         public static readonly Route CreateRole = Post("guilds/{0:guild_id}/roles");
 
         public static readonly Route ReorderRoles = Patch("guilds/{0:guild_id}/roles");
@@ -249,6 +253,8 @@ public sealed partial class Route
 
         public static readonly Route GetWidgetImage = Get("guilds/{0:guild_id}/widget.png");
 
+        public static readonly Route SearchMessages = Get("guilds/{0:guild_id}/messages/search");
+
         public static readonly Route GetWelcomeScreen = Get("guilds/{0:guild_id}/welcome-screen");
 
         public static readonly Route ModifyWelcomeScreen = Patch("guilds/{0:guild_id}/welcome-screen");
@@ -278,6 +284,12 @@ public sealed partial class Route
         public static readonly Route GetInvite = Get("invites/{0:invite_code}");
 
         public static readonly Route DeleteInvite = Delete("invites/{0:invite_code}");
+
+        public static readonly Route GetTargetUsers = Get("invites/{0:invite_code}/target-users");
+
+        public static readonly Route UpdateTargetUsers = Put("invites/{0:invite_code}/target-users");
+
+        public static readonly Route GetTargetUsersJobStatus = Get("invites/{0:invite_code}/target-users/job-status");
     }
 
     public static class Poll

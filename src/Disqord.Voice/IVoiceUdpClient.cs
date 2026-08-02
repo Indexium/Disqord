@@ -27,6 +27,8 @@ public interface IVoiceUdpClient : IDisposable
 
     uint Timestamp { get; }
 
+    void Initialize(byte[] encryptionKey, DaveEncryptor? daveEncryptor);
+
     void OnSynchronizerTick();
 
     ValueTask ConnectAsync(CancellationToken cancellationToken = default);
@@ -34,4 +36,6 @@ public interface IVoiceUdpClient : IDisposable
     ValueTask CloseAsync(CancellationToken cancellationToken = default);
 
     ValueTask SendAsync(ReadOnlyMemory<byte> opus, CancellationToken cancellationToken = default);
+
+    ValueTask<VoiceReceivePacket?> ReceiveAsync(CancellationToken cancellationToken = default);
 }

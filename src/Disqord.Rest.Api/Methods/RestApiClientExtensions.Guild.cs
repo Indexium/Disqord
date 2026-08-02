@@ -254,6 +254,14 @@ public static partial class RestApiClientExtensions
         return client.ExecuteAsync<RoleJsonModel[]>(route, null, options, cancellationToken);
     }
 
+    public static Task<Dictionary<Snowflake, int>> FetchRoleMemberCountsAsync(this IRestApiClient client,
+        Snowflake guildId,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var route = Format(Route.Guild.GetRoleMemberCounts, guildId);
+        return client.ExecuteAsync<Dictionary<Snowflake, int>>(route, null, options, cancellationToken);
+    }
+
     public static Task<RoleJsonModel> CreateRoleAsync(this IRestApiClient client,
         Snowflake guildId, CreateRoleJsonRestRequestContent content,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
@@ -429,5 +437,13 @@ public static partial class RestApiClientExtensions
     {
         var route = Format(Route.Guild.ModifyMemberVoiceState, guildId, memberId);
         return client.ExecuteAsync(route, content, options, cancellationToken);
+    }
+
+    public static Task<MessageSearchResponseJsonModel> SearchMessagesAsync(this IRestApiClient client,
+        Snowflake guildId, IEnumerable<KeyValuePair<string, object>> queryParameters,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var route = Format(Route.Guild.SearchMessages, queryParameters, guildId);
+        return client.ExecuteAsync<MessageSearchResponseJsonModel>(route, null, options, cancellationToken);
     }
 }

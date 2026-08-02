@@ -135,6 +135,51 @@ public abstract partial class LocalComponent : ILocalConstruct<LocalComponent>, 
                     MinValues = fileUpload.MinimumUploadedFiles,
                     MaxValues = fileUpload.MaximumUploadedFiles,
                     Required = fileUpload.IsRequired,
+                    FileTypes = Optional.Convert(fileUpload.FileTypes, static fileTypes => fileTypes?.ToArray())!,
+                };
+
+                break;
+            }
+            case LocalRadioGroupComponent radioGroup:
+            {
+                OptionalGuard.HasValue(radioGroup.CustomId);
+
+                model = new RadioGroupComponentJsonModel
+                {
+                    CustomId = radioGroup.CustomId.Value,
+                    Options = Optional.Convert(radioGroup.Options, static options => options.Select(static option => option.ToModel()).ToArray()),
+                    Required = radioGroup.IsRequired,
+                    Disabled = radioGroup.IsDisabled
+                };
+
+                break;
+            }
+            case LocalCheckboxGroupComponent checkboxGroup:
+            {
+                OptionalGuard.HasValue(checkboxGroup.CustomId);
+
+                model = new CheckboxGroupComponentJsonModel
+                {
+                    CustomId = checkboxGroup.CustomId.Value,
+                    Options = Optional.Convert(checkboxGroup.Options, static options => options.Select(static option => option.ToModel()).ToArray()),
+                    MinValues = checkboxGroup.MinimumSelectedOptions,
+                    MaxValues = checkboxGroup.MaximumSelectedOptions,
+                    Required = checkboxGroup.IsRequired,
+                    Disabled = checkboxGroup.IsDisabled
+                };
+
+                break;
+            }
+            case LocalCheckboxComponent checkbox:
+            {
+                OptionalGuard.HasValue(checkbox.CustomId);
+
+                model = new CheckboxComponentJsonModel
+                {
+                    CustomId = checkbox.CustomId.Value,
+                    Default = checkbox.IsDefault,
+                    Label = checkbox.Label,
+                    Disabled = checkbox.IsDisabled
                 };
 
                 break;

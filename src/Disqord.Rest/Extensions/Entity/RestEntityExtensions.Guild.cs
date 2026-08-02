@@ -242,13 +242,13 @@ public static partial class RestEntityExtensions
         var client = guild.GetRestClient();
         return client.FetchBanAsync(guild.Id, userId, options, cancellationToken);
     }
-
+    
     public static Task CreateBanAsync(this IGuild guild,
-        Snowflake userId, string? reason = null, int? deleteMessageDays = null,
+        Snowflake userId, string? reason = null, TimeSpan? deleteMessageDuration = null,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         var client = guild.GetRestClient();
-        return client.CreateBanAsync(guild.Id, userId, reason, deleteMessageDays, options, cancellationToken);
+        return client.CreateBanAsync(guild.Id, userId, reason, deleteMessageDuration, options, cancellationToken);
     }
 
     public static Task DeleteBanAsync(this IGuild guild,
@@ -264,6 +264,13 @@ public static partial class RestEntityExtensions
     {
         var client = guild.GetRestClient();
         return client.FetchRolesAsync(guild.Id, options, cancellationToken);
+    }
+
+    public static Task<IReadOnlyDictionary<Snowflake, int>> FetchRoleMemberCountsAsync(this IGuild guild,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var client = guild.GetRestClient();
+        return client.FetchRoleMemberCountsAsync(guild.Id, options, cancellationToken);
     }
 
     public static Task<IRole> CreateRoleAsync(this IGuild guild,
@@ -703,5 +710,32 @@ public static partial class RestEntityExtensions
     {
         var client = guild.GetRestClient();
         return client.DeleteAutoModerationRuleAsync(guild.Id, ruleId, options, cancellationToken);
+    }
+
+    /// <inheritdoc cref="RestClientExtensions.EnumerateMessageSearches"/>
+    public static IAsyncEnumerable<IMessageSearchResponse> EnumerateMessageSearches(this IGuild guild,
+        LocalMessageSearch search, int limit,
+        MessageSearchSortMode sortBy = MessageSearchSortMode.Timestamp,
+        MessageSearchSortOrder sortOrder = MessageSearchSortOrder.Descending,
+        Snowflake? afterId = null, Snowflake? beforeId = null,
+        bool waitUntilIndexReady = false,
+        IRestRequestOptions? options = null)
+    {
+        var client = guild.GetRestClient();
+        return client.EnumerateMessageSearches(guild.Id, search, limit, sortBy, sortOrder, afterId, beforeId, waitUntilIndexReady, options);
+    }
+
+    /// <inheritdoc cref="RestClientExtensions.SearchMessagesAsync"/>
+    public static Task<IMessageSearchResponse> SearchMessagesAsync(this IGuild guild,
+        LocalMessageSearch search,
+        int limit = Discord.Limits.Rest.SearchMessagesPageSize,
+        MessageSearchSortMode sortBy = MessageSearchSortMode.Timestamp,
+        MessageSearchSortOrder sortOrder = MessageSearchSortOrder.Descending,
+        Snowflake? afterId = null, Snowflake? beforeId = null,
+        bool waitUntilIndexReady = false,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var client = guild.GetRestClient();
+        return client.SearchMessagesAsync(guild.Id, search, limit, sortBy, sortOrder, afterId, beforeId, waitUntilIndexReady, options, cancellationToken);
     }
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../../src/Disqord.targets"/>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+        <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.1" />
+        <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Disqord.Bot\Disqord.Bot.csproj"/>
+        <ProjectReference Include="..\..\src\Disqord.Core\Disqord.Core.csproj"/>
+        <ProjectReference Include="..\..\src\Disqord.Gateway.Api\Disqord.Gateway.Api.csproj"/>
+        <ProjectReference Include="..\..\src\Disqord.Gateway\Disqord.Gateway.csproj"/>
+        <ProjectReference Include="..\..\src\Disqord.Rest.Api\Disqord.Rest.Api.csproj"/>
+        <ProjectReference Include="..\..\src\Disqord.Rest\Disqord.Rest.csproj"/>
+        <ProjectReference Include="..\..\src\Disqord\Disqord.csproj"/>
+    </ItemGroup>
+</Project>

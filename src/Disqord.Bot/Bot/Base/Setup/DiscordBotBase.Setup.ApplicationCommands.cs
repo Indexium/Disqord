@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -445,6 +445,14 @@ public abstract partial class DiscordBotBase
                                     option.MinimumValue = uint.MinValue;
                                     option.MaximumValue = uint.MaxValue;
                                 }
+                                else if (actualType == typeof(long))
+                                {
+                                    option.Type = SlashCommandOptionType.Integer;
+                                }
+                                else if (actualType == typeof(ulong))
+                                {
+                                    option.Type = SlashCommandOptionType.Integer;
+                                }
                                 else if (actualType == typeof(Half))
                                 {
                                     option.Type = SlashCommandOptionType.Number;
@@ -484,6 +492,21 @@ public abstract partial class DiscordBotBase
                                 else
                                 {
                                     option.Type = SlashCommandOptionType.String;
+                                }
+
+                                if (option.Type.Value is SlashCommandOptionType.Attachment)
+                                {
+                                    var customAttributes = parameter.CustomAttributes;
+                                    var customAttributeCount = customAttributes.Count;
+                                    for (var i = 0; i < customAttributeCount; i++)
+                                    {
+                                        var customAttribute = customAttributes[i];
+                                        if (customAttribute is not FileTypesAttribute requireFileTypesAttribute)
+                                            continue;
+
+                                        option.FileTypes = requireFileTypesAttribute.FileTypes;
+                                        break;
+                                    }
                                 }
 
                                 if (option.Type.Value is SlashCommandOptionType.Channel or SlashCommandOptionType.Mentionable)
