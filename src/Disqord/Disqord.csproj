@@ -6,7 +6,7 @@
     </PropertyGroup>
     <Import Project="../Disqord.targets"/>
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Disqord.Extensions.Interactivity\Disqord.Extensions.Interactivity.csproj"/>
