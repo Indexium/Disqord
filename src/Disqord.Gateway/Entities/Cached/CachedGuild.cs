@@ -309,7 +309,10 @@ public class CachedGuild : CachedSnowflakeEntity, IGatewayGuild,
     private void SetStickers(Optional<StickerJsonModel[]> stickers)
     {
         if (!stickers.HasValue)
+        {
             Stickers = ReadOnlyDictionary<Snowflake, IGuildSticker>.Empty;
+            return;
+        }
 
         Stickers = stickers.Value.ToReadOnlyDictionary(Client,
             (model, _) => model.Id,
