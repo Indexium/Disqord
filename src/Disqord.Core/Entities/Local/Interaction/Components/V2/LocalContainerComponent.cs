@@ -32,6 +32,7 @@ public class LocalContainerComponent : LocalComponent, ILocalSpoilerable, ILocal
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalContainerComponent(LocalContainerComponent other)
+        : base(other)
     {
         AccentColor = other.AccentColor;
         IsSpoiler = other.IsSpoiler;

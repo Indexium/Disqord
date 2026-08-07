@@ -81,6 +81,7 @@ public class LocalSelectionComponent : LocalComponent, ILocalCustomIdentifiableE
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalSelectionComponent(LocalSelectionComponent other)
+        : base(other)
     {
         CustomId = other.CustomId;
         Type = other.Type;
@@ -89,6 +90,7 @@ public class LocalSelectionComponent : LocalComponent, ILocalCustomIdentifiableE
         DefaultValues = other.DefaultValues.DeepClone();
         MinimumSelectedOptions = other.MinimumSelectedOptions;
         MaximumSelectedOptions = other.MaximumSelectedOptions;
+        IsDisabled = other.IsDisabled;
         Options = other.Options.DeepClone();
         IsRequired = other.IsRequired;
     }

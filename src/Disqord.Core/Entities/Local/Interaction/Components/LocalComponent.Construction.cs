@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Disqord;
@@ -93,7 +93,7 @@ public abstract partial class LocalComponent
 
     public static LocalThumbnailComponent Thumbnail(string url, string? description = null, bool isSpoiler = false)
     {
-        return Thumbnail(new LocalUnfurledMediaItem(url));
+        return Thumbnail(new LocalUnfurledMediaItem(url), description, isSpoiler);
     }
 
     public static LocalThumbnailComponent Thumbnail(LocalUnfurledMediaItem media, string? description = null, bool isSpoiler = false)

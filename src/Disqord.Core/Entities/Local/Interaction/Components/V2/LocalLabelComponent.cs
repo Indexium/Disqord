@@ -30,9 +30,11 @@ public class LocalLabelComponent : LocalComponent, ILocalConstruct<LocalLabelCom
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalLabelComponent(LocalLabelComponent other)
+        : base(other)
     {
         Label = other.Label;
         Description = other.Description;
+        Component = other.Component.Clone();
     }
 
     /// <inheritdoc/>
