@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Disqord.Bot.Commands.Components;
@@ -48,10 +48,11 @@ public class TestComponentModule : DiscordComponentModuleBase
     }
 
     [ModalCommand("Modal1")]
-    public IResult Modal1(string name, string[] favoriteFood, IMember[] favoriteMembers, IAttachment secretFile)
+    [BindModalArgumentsByCustomId]
+    public IResult Modal1(string name, string[] favoriteFood, IMember[] favoriteMembers, IAttachment favoriteFiles)
     {
         return Response(new LocalInteractionMessageResponse()
-            .WithContent($"Your name is {name} and your favorite food is: {string.Join(", ", favoriteFood)}.\n\nYour favorite members are: {string.Join(", ", favoriteMembers.Select(x => x.Mention))}\n\nI got your secret file: {secretFile.FileName}")
+            .WithContent($"Your name is {name} and your favorite food is: {string.Join(", ", favoriteFood)}.\n\nYour favorite members are: {string.Join(", ", favoriteMembers.Select(x => x.Mention))}\n\nI got your secret file: {favoriteFiles.FileName}")
             .WithIsEphemeral());
     }
 

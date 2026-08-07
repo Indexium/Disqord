@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -19,7 +19,7 @@ public static partial class DefaultComponentExecutionSteps
             var componentContext = Guard.IsAssignableToType<IDiscordComponentCommandContext>(context);
             Guard.IsNotNull(context.Command);
 
-            var command = context.Command;
+            var command = Guard.IsAssignableToType<ComponentCommand>(context.Command);
             var interaction = componentContext.Interaction;
             var parameterOffset = context.RawArguments?.Count ?? 0; // TODO: RawArguments is a dictionary, so this is wrong.
             if (interaction is ISelectionComponentInteraction selectionInteraction)
@@ -34,20 +34,49 @@ public static partial class DefaultComponentExecutionSteps
             {
                 var parameters = command.Parameters;
                 var parameterCount = parameters.Count;
+                var modalComponents = GetInteractableComponents(modalSubmitInteraction.Components);
 
-                using var modalComponentsEnumerator = GetInteractableComponents(modalSubmitInteraction.Components).GetEnumerator();
-
-                // TODO: implement custom ID matching. For now, it's just assigning positionally
-                for (var parameterIndex = parameterOffset; parameterIndex < parameterCount && modalComponentsEnumerator.MoveNext(); parameterIndex++)
+                if (command.BindModalArgumentsByCustomId)
                 {
-                    var parameter = parameters[parameterIndex];
-                    var modalComponent = modalComponentsEnumerator.Current;
-
-                    BindArgumentFromModalComponent(componentContext, parameter, modalComponent);
+                    BindModalArgumentsByCustomId(componentContext, command.Name, parameters, parameterOffset, parameterCount, modalComponents);
+                }
+                else
+                {
+                    BindModalArgumentsPositionally(componentContext, parameters, parameterOffset, parameterCount, modalComponents);
                 }
             }
 
             return Next.ExecuteAsync(context);
+        }
+
+        protected virtual void BindModalArgumentsPositionally(IDiscordComponentCommandContext context, IReadOnlyList<IParameter> parameters, int parameterOffset, int parameterCount, IEnumerable<IModalComponent> modalComponents)
+        {
+            using var modalComponentsEnumerator = modalComponents.GetEnumerator();
+            for (var parameterIndex = parameterOffset; parameterIndex < parameterCount && modalComponentsEnumerator.MoveNext(); parameterIndex++)
+            {
+                var parameter = parameters[parameterIndex];
+                BindArgumentFromModalComponent(context, parameter, modalComponentsEnumerator.Current);
+            }
+        }
+
+        protected virtual void BindModalArgumentsByCustomId(IDiscordComponentCommandContext context, string commandName, IReadOnlyList<IParameter> parameters, int parameterOffset, int parameterCount, IEnumerable<IModalComponent> modalComponents)
+        {
+            var modalComponentsByCustomId = new Dictionary<string, IModalComponent>();
+            foreach (var modalComponent in modalComponents)
+            {
+                modalComponentsByCustomId[((ICustomIdentifiableEntity) modalComponent).CustomId] = modalComponent;
+            }
+
+            for (var parameterIndex = parameterOffset; parameterIndex < parameterCount; parameterIndex++)
+            {
+                var parameter = parameters[parameterIndex];
+                if (!modalComponentsByCustomId.TryGetValue(parameter.Name, out var modalComponent))
+                {
+                    Throw.InvalidOperationException($"The modal submission is missing a component with the custom ID '{parameter.Name}' required to bind parameter '{parameter.Name}' of command '{commandName}'.");
+                }
+
+                BindArgumentFromModalComponent(context, parameter, modalComponent);
+            }
         }
 
         protected virtual IEnumerable<IModalComponent> GetInteractableComponents(IEnumerable<IModalComponent> modalComponents)

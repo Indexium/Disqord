@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
@@ -214,7 +214,6 @@ public partial class ComponentCommandMap
             string customId, [MaybeNullWhen(false)] out ComponentCommand command, out IEnumerable<MultiString>? rawArguments)
         {
             var slices = new List<ReadOnlyMemory<char>>(8);
-            List<MultiString>? rawArgumentSlices = null;
             var splitter = new PatternSplitter(customId.AsMemory());
             while (splitter.MoveNext())
             {
@@ -233,6 +232,7 @@ public partial class ComponentCommandMap
             {
                 command = patternCommand;
 
+                List<MultiString>? rawArgumentSlices = null;
                 var patternSlices = pattern.Slices;
                 if (patternSlices.Length != sliceCount)
                     continue;
@@ -351,18 +351,21 @@ public partial class ComponentCommandMap
                 {
                     var groups = match.Groups;
                     var groupCount = groups.Count - 1;
-                    if (groupCount != 0)
+                    if (groupCount == 0)
                     {
-                        var array = new MultiString[groupCount];
-                        for (var j = 0; j < groupCount; j++)
-                        {
-                            var group = groups[j + 1];
-                            array[j] = customId.AsMemory(group.Index, group.Length);
-                        }
-
-                        rawArguments = array;
+                        rawArguments = null;
                         return true;
                     }
+
+                    var array = new MultiString[groupCount];
+                    for (var j = 0; j < groupCount; j++)
+                    {
+                        var group = groups[j + 1];
+                        array[j] = customId.AsMemory(group.Index, group.Length);
+                    }
+
+                    rawArguments = array;
+                    return true;
                 }
             }
 
