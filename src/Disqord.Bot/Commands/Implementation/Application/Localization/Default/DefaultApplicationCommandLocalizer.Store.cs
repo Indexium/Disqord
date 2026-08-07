@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -150,7 +150,7 @@ public partial class DefaultApplicationCommandLocalizer
                 if (slashCommand.Options.TryGetValue(out var options))
                 {
                     if (options == null)
-                        return;
+                        continue;
 
                     if (isInitial || !commandLocalization.Options.TryGetValue(out var optionLocalizations) || optionLocalizations == null)
                     {
