@@ -143,7 +143,13 @@ public static partial class GatewayEntityExtensions
     [Obsolete(CalculateRoleHierarchyWorkaroundMessage)]
     public static int CalculateRoleHierarchy(this IMember member)
     {
-        return member.CalculateRoleHierarchy(member.GetGuild()!);
+        var guild = member.GetGuild();
+        if (guild == null)
+        {
+            Throw.InvalidOperationException("The guild cache must be enabled.");
+        }
+
+        return member.CalculateRoleHierarchy(guild);
     }
 
     /// <summary>
@@ -180,7 +186,13 @@ public static partial class GatewayEntityExtensions
     /// </returns>
     public static Permissions CalculateGuildPermissions(this IMember member)
     {
-        return member.CalculateGuildPermissions(member.GetGuild()!);
+        var guild = member.GetGuild();
+        if (guild == null)
+        {
+            Throw.InvalidOperationException("The guild cache must be enabled.");
+        }
+
+        return member.CalculateGuildPermissions(guild);
     }
 
     /// <summary>
@@ -211,7 +223,13 @@ public static partial class GatewayEntityExtensions
     /// </returns>
     public static Permissions CalculateChannelPermissions(this IMember member, IGuildChannel channel)
     {
-        return member.CalculateChannelPermissions(member.GetGuild()!, channel);
+        var guild = member.GetGuild();
+        if (guild == null)
+        {
+            Throw.InvalidOperationException("The guild cache must be enabled.");
+        }
+
+        return member.CalculateChannelPermissions(guild, channel);
     }
 
     /// <summary>
