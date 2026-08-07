@@ -270,6 +270,9 @@ public abstract partial class ViewBase : IAsyncDisposable
                 message.AllowedMentions = LocalAllowedMentions.None;
 
             var components = new List<LocalComponent>();
+            if (message.Components.TryGetValue(out var templateComponents) && templateComponents != null)
+                components.AddRange(templateComponents);
+
             foreach (var row in _rows)
             {
                 if (row.Count == 0)
