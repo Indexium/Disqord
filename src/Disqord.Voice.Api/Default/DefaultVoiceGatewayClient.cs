@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disqord.Serialization.Json;
@@ -67,6 +68,10 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
     private readonly Tcs<ReadyJsonModel> _readyTcs;
     private readonly Tcs<SessionDescriptionJsonModel> _sessionDescriptionTcs;
     private Tcs? _postSessionDescriptionTcs;
+    private bool _isConnectionReady;
+    private Tcs? _connectionReadyTcs;
+    private int _connectionReadyGeneration;
+    private ExceptionDispatchInfo? _stopExceptionInfo;
 
     private readonly HashSet<Snowflake> _connectedUserIds = [];
     private readonly Dictionary<uint, Snowflake> _ssrcUserIds = [];
@@ -125,6 +130,81 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
         return sessionDescriptionTask.WaitAsync(cancellationToken);
     }
 
+    private async Task<int> WaitForConnectionReadyAsync(int minimumGeneration, CancellationToken cancellationToken)
+    {
+        using (var cts = Cts.Linked(cancellationToken, StoppingToken))
+        {
+            while (true)
+            {
+                Task connectionReadyTask;
+                lock (_stateLock)
+                {
+                    _stopExceptionInfo?.Throw();
+
+                    if (_isConnectionReady && _connectionReadyGeneration >= minimumGeneration)
+                    {
+                        return _connectionReadyGeneration;
+                    }
+
+                    connectionReadyTask = (_connectionReadyTcs ??= new()).Task;
+                }
+
+                try
+                {
+                    await connectionReadyTask.WaitAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    lock (_stateLock)
+                    {
+                        _stopExceptionInfo?.Throw();
+                    }
+
+                    StoppingToken.ThrowIfCancellationRequested();
+                    throw;
+                }
+            }
+        }
+    }
+
+    private void OnConnectionReady()
+    {
+        Tcs? connectionReadyTcs;
+        lock (_stateLock)
+        {
+            _isConnectionReady = true;
+            _connectionReadyGeneration++;
+            connectionReadyTcs = _connectionReadyTcs;
+            _connectionReadyTcs = null;
+        }
+
+        connectionReadyTcs?.Complete();
+    }
+
+    private void OnConnectionLost()
+    {
+        lock (_stateLock)
+        {
+            _isConnectionReady = false;
+        }
+    }
+
+    private void OnConnectionStopped(Exception exception)
+    {
+        Tcs? connectionReadyTcs;
+        lock (_stateLock)
+        {
+            _isConnectionReady = false;
+            _stopExceptionInfo = ExceptionDispatchInfo.Capture(exception);
+            connectionReadyTcs = _connectionReadyTcs;
+            _connectionReadyTcs = null;
+        }
+
+        connectionReadyTcs?.Throw(exception);
+    }
+
     /// <inheritdoc/>
     public bool TryGetUserId(uint ssrc, out Snowflake userId)
     {
@@ -139,6 +219,31 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
     {
         Guard.IsNotNull(payload);
 
+        if (!RequiresConnectionReady(payload.Op))
+        {
+            await InternalSendAsync(payload, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var minimumGeneration = 0;
+        while (true)
+        {
+            var generation = await WaitForConnectionReadyAsync(minimumGeneration, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await InternalSendAsync(payload, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            catch (WebSocketClosedException ex) when (IsResumable(ex))
+            {
+                Logger.LogDebug(ex, "The connection was closed while sending voice payload: {0}. Retrying after the next ready connection...", payload.Op);
+                minimumGeneration = generation + 1;
+            }
+        }
+    }
+
+    private async Task InternalSendAsync(VoiceGatewayPayloadJsonModel payload, CancellationToken cancellationToken)
+    {
         try
         {
             Logger.LogTrace("Sending voice payload: {0}.", payload.Op);
@@ -146,13 +251,23 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
         }
         catch (Exception ex)
         {
-            if (ex is not OperationCanceledException and not ObjectDisposedException)
+            if (ex is not OperationCanceledException and not ObjectDisposedException and not WebSocketClosedException)
             {
                 Logger.LogError(ex, "An exception occurred while sending voice payload: {0}.", payload.Op);
             }
 
             throw;
         }
+    }
+
+    private static bool RequiresConnectionReady(VoiceGatewayPayloadOperation operation)
+    {
+        return operation is VoiceGatewayPayloadOperation.SelectProtocol or VoiceGatewayPayloadOperation.Speaking;
+    }
+
+    private static bool IsResumable(WebSocketClosedException exception)
+    {
+        return exception.CloseStatus == null || ((VoiceGatewayCloseCode) exception.CloseStatus.Value).IsResumable();
     }
 
     /// <inheritdoc/>
@@ -167,17 +282,31 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
         }
         catch (Exception ex)
         {
-            if (ex is not OperationCanceledException and not ObjectDisposedException)
+            if (ex is not OperationCanceledException and not ObjectDisposedException and not WebSocketClosedException)
                 Logger.LogError(ex, "An exception occurred while sending binary voice payload.");
 
             throw;
         }
     }
 
-    public Task RunAsync(CancellationToken stoppingToken)
+    public async Task RunAsync(CancellationToken stoppingToken)
     {
         StoppingToken = stoppingToken;
-        return InternalRunAsync(stoppingToken);
+        lock (_stateLock)
+        {
+            _stopExceptionInfo = null;
+        }
+
+        try
+        {
+            await InternalRunAsync(stoppingToken).ConfigureAwait(false);
+            OnConnectionStopped(new OperationCanceledException(stoppingToken));
+        }
+        catch (Exception ex)
+        {
+            OnConnectionStopped(ex);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -267,6 +396,7 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
                                 _readyTcs.Complete(model);
                             }
 
+                            OnConnectionReady();
                             break;
                         }
                         case VoiceGatewayPayloadOperation.Heartbeat:
@@ -349,6 +479,7 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
                         case VoiceGatewayPayloadOperation.Resumed:
                         {
                             Logger.LogDebug("The voice gateway resumed the session.");
+                            OnConnectionReady();
                             break;
                         }
                         case VoiceGatewayPayloadOperation.ClientConnect:
@@ -533,6 +664,8 @@ public class DefaultVoiceGatewayClient : IVoiceGatewayClient
             }
             finally
             {
+                OnConnectionLost();
+
                 try
                 {
                     Logger.LogDebug("Stopping the voice heartbeater due to connection end.");

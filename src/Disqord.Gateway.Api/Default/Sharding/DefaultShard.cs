@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disqord.Gateway.Api.Models;
@@ -45,23 +46,48 @@ public class DefaultShard : IShard
     public IGateway Gateway { get; }
 
     /// <inheritdoc/>
-    /// <inheritdoc/>
     public string? SessionId { get; private set; }
 
     /// <inheritdoc/>
-    public int? Sequence { get; private set; }
+    public int? Sequence
+    {
+        get
+        {
+            var sequence = _sequence;
+            return sequence != NoSequence
+                ? sequence
+                : null;
+        }
+        private set => _sequence = value ?? NoSequence;
+    }
 
     /// <inheritdoc/>
     public Uri? ResumeUri { get; private set; }
 
     /// <inheritdoc/>
-    public ShardState State { get; private set; }
+    public ShardState State
+    {
+        get
+        {
+            lock (_stateLock)
+            {
+                return _state;
+            }
+        }
+    }
 
     /// <inheritdoc/>
     public CancellationToken StoppingToken { get; private set; }
 
+    private const int NoSequence = -1;
+
     private readonly object _stateLock = new();
+    private readonly Cts _stoppedCts = new();
+    private ShardState _state;
     private Tcs? _readyTcs;
+    private int _readyGeneration;
+    private volatile int _sequence = NoSequence;
+    private ExceptionDispatchInfo? _stopExceptionInfo;
 
     public DefaultShard(
         ShardId id,
@@ -93,31 +119,61 @@ public class DefaultShard : IShard
     {
         Guard.IsNotNull(payload);
 
-        var sent = false;
-        do
+        if (!RequiresReady(payload.Op))
         {
-            await RateLimiter.WaitAsync(payload.Op, cancellationToken).ConfigureAwait(false);
+            await InternalSendAsync(payload, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var minimumReadyGeneration = 0;
+        while (true)
+        {
+            var readyGeneration = await InternalWaitForReadyAsync(minimumReadyGeneration, cancellationToken).ConfigureAwait(false);
             try
             {
-                Logger.LogTrace("Sending payload: {0}.", payload.Op);
-                await Gateway.SendAsync(payload, cancellationToken).ConfigureAwait(false);
-                sent = true;
-                RateLimiter.NotifyCompletion(payload.Op);
+                await InternalSendAsync(payload, cancellationToken).ConfigureAwait(false);
+                return;
             }
-            catch (WebSocketClosedException ex) when (ex.CloseStatus != null && ((GatewayCloseCode) ex.CloseStatus).IsRecoverable())
+            catch (WebSocketClosedException ex) when (IsRecoverable(ex))
             {
-                await WaitForReadyAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                if (ex is not OperationCanceledException)
-                    Logger.LogError(ex, "An exception occurred while sending payload: {0}.", payload.Op);
-
-                RateLimiter.Release(payload.Op);
-                throw;
+                Logger.LogDebug(ex, "The connection was closed while sending payload: {0}. Retrying after the next ready session...", payload.Op);
+                minimumReadyGeneration = readyGeneration + 1;
             }
         }
-        while (!sent);
+    }
+
+    private async Task InternalSendAsync(GatewayPayloadJsonModel payload, CancellationToken cancellationToken)
+    {
+        await RateLimiter.WaitAsync(payload.Op, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            Logger.LogTrace("Sending payload: {0}.", payload.Op);
+            await Gateway.SendAsync(payload, cancellationToken).ConfigureAwait(false);
+            RateLimiter.NotifyCompletion(payload.Op);
+        }
+        catch (Exception ex)
+        {
+            RateLimiter.Release(payload.Op);
+
+            if (ex is not OperationCanceledException and not WebSocketClosedException)
+            {
+                Logger.LogError(ex, "An exception occurred while sending payload: {0}.", payload.Op);
+            }
+
+            throw;
+        }
+    }
+
+    private static bool RequiresReady(GatewayPayloadOperation operation)
+    {
+        return operation is GatewayPayloadOperation.UpdatePresence
+            or GatewayPayloadOperation.UpdateVoiceState
+            or GatewayPayloadOperation.RequestMembers;
+    }
+
+    private static bool IsRecoverable(WebSocketClosedException exception)
+    {
+        return exception.CloseStatus == null || ((GatewayCloseCode) exception.CloseStatus.Value).IsRecoverable();
     }
 
     /// <inheritdoc/>
@@ -125,18 +181,82 @@ public class DefaultShard : IShard
     {
         lock (_stateLock)
         {
-            if (State == ShardState.Ready)
+            if (_state == ShardState.Ready)
+            {
                 return Task.CompletedTask;
+            }
 
             return (_readyTcs ??= new()).Task.WaitAsync(cancellationToken);
         }
     }
 
+    private async Task<int> InternalWaitForReadyAsync(int minimumReadyGeneration, CancellationToken cancellationToken)
+    {
+        lock (_stateLock)
+        {
+            _stopExceptionInfo?.Throw();
+        }
+
+        using (var cts = Cts.Linked(cancellationToken, _stoppedCts.Token))
+        {
+            while (true)
+            {
+                Task readyTask;
+                lock (_stateLock)
+                {
+                    _stopExceptionInfo?.Throw();
+
+                    if (_state == ShardState.Ready && _readyGeneration >= minimumReadyGeneration)
+                    {
+                        return _readyGeneration;
+                    }
+
+                    readyTask = (_readyTcs ??= new()).Task;
+                }
+
+                try
+                {
+                    await readyTask.WaitAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    lock (_stateLock)
+                    {
+                        _stopExceptionInfo?.Throw();
+                    }
+
+                    throw;
+                }
+            }
+        }
+    }
+
     /// <inheritdoc/>
-    public Task RunAsync(Uri? initialUri, CancellationToken stoppingToken)
+    public async Task RunAsync(Uri? initialUri, CancellationToken stoppingToken)
     {
         StoppingToken = stoppingToken;
-        return InternalRunAsync(initialUri, stoppingToken);
+        try
+        {
+            await InternalRunAsync(initialUri, stoppingToken).ConfigureAwait(false);
+            OnStopped(new OperationCanceledException(stoppingToken));
+        }
+        catch (Exception ex)
+        {
+            OnStopped(ex);
+            throw;
+        }
+    }
+
+    private void OnStopped(Exception exception)
+    {
+        lock (_stateLock)
+        {
+            _stopExceptionInfo = ExceptionDispatchInfo.Capture(exception);
+        }
+
+        _stoppedCts.Cancel();
     }
 
     private async Task InternalConnectAsync(Uri? uri, CancellationToken stoppingToken)
@@ -203,8 +323,6 @@ public class DefaultShard : IShard
                             {
                                 case "READY":
                                 {
-                                    await SetStateAsync(ShardState.Ready, stoppingToken).ConfigureAwait(false);
-
                                     Logger.LogInformation("Successfully identified. The gateway is ready.");
                                     RateLimiter.Reset();
 
@@ -219,11 +337,7 @@ public class DefaultShard : IShard
 
                                     Logger.LogTrace("Session ID: {SessionId}, Resume URI: {ResumeUri}.", SessionId, ResumeUri);
 
-                                    lock (_stateLock)
-                                    {
-                                        _readyTcs?.Complete();
-                                        _readyTcs = null;
-                                    }
+                                    await SetStateAsync(ShardState.Ready, stoppingToken).ConfigureAwait(false);
 
                                     try
                                     {
@@ -488,16 +602,25 @@ public class DefaultShard : IShard
     private async ValueTask SetStateAsync(ShardState newState, CancellationToken stoppingToken)
     {
         ShardState oldState;
+        Tcs? readyTcs = null;
         lock (_stateLock)
         {
-            oldState = State;
-            if (oldState == newState)
+            oldState = _state;
+            _state = newState;
+            if (newState == ShardState.Ready)
             {
-                Debug.Fail("redundant state change");
-                return;
+                _readyGeneration++;
+                readyTcs = _readyTcs;
+                _readyTcs = null;
             }
+        }
 
-            State = newState;
+        readyTcs?.Complete();
+
+        if (oldState == newState)
+        {
+            Debug.Fail("redundant state change");
+            return;
         }
 
         try
@@ -546,7 +669,11 @@ public class DefaultShard : IShard
                     Intents = Intents,
                     LargeThreshold = LargeGuildThreshold,
                     Shard = Id.Count > 1
-                        ? new[] { Id.Index, Id.Count }
+                        ? new[]
+                        {
+                            Id.Index,
+                            Id.Count
+                        }
                         : Optional<int[]>.Empty,
                     Presence = Optional.FromNullable(Presence)
                 }
@@ -575,6 +702,8 @@ public class DefaultShard : IShard
     /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
+        OnStopped(new ObjectDisposedException(GetType().FullName, "The shard has been disposed."));
+        _stoppedCts.Dispose();
         return Gateway.DisposeAsync();
     }
 }
