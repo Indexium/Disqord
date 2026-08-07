@@ -171,7 +171,7 @@ public sealed partial class Route
 
         public static readonly Route GetGuild = Get("guilds/{0:guild_id}");
 
-        public static readonly Route GetGuildPreview = Post("guilds/{0:guild_id}/preview");
+        public static readonly Route GetGuildPreview = Get("guilds/{0:guild_id}/preview");
 
         public static readonly Route ModifyGuild = Patch("guilds/{0:guild_id}");
 
