@@ -296,36 +296,31 @@ public partial class ComponentCommandMap
 
             private ReadOnlyMemory<char> _current;
             private ReadOnlyMemory<char> _text;
+            private bool _isDone;
 
             public PatternSplitter(ReadOnlyMemory<char> text)
             {
                 _current = default;
                 _text = text;
+                _isDone = text.IsEmpty;
             }
 
             public bool MoveNext()
             {
-                if (_text.IsEmpty)
+                if (_isDone)
                     return false;
 
-                do
+                var index = _text.Span.IndexOf(':');
+                if (index == -1)
                 {
-                    var index = _text.Span.IndexOf(':');
-                    if (index == -1)
-                    {
-                        if (_text.IsEmpty)
-                            return false;
-
-                        _current = _text;
-                        _text = default;
-                        return !_current.IsEmpty;
-                    }
-
-                    _current = _text.Slice(0, index);
-                    _text = _text.Slice(index + 1);
+                    _current = _text;
+                    _text = default;
+                    _isDone = true;
+                    return true;
                 }
-                while (_current.IsEmpty);
 
+                _current = _text.Slice(0, index);
+                _text = _text.Slice(index + 1);
                 return true;
             }
         }
