@@ -143,7 +143,7 @@ public partial class DefaultApplicationCommandCacheProvider
                 : Model.GuildCommands?.GetValueOrDefault(guildId.Value);
 
             var commandIds = commands.ToDictionary(x => x.Name, x => x.Id);
-            var newModelCommands = new List<CommandJsonModel>(modelCommands?.Length ?? 0 + fastChanges.CreatedCommands.Count - fastChanges.DeletedCommandIds.Count);
+            var newModelCommands = new List<CommandJsonModel>((modelCommands?.Length ?? 0) + fastChanges.CreatedCommands.Count - fastChanges.DeletedCommandIds.Count);
 
             foreach (var unchangedCommand in fastChanges.UnchangedCommands)
             {

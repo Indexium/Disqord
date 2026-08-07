@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -196,33 +196,33 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
                     var localeFilePath = storeInformation.LocaleFilePath;
                     try
                     {
+                        FileStream fileStream;
+                        try
+                        {
+                            fileStream = new FileStream(temporaryFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                            createdTemporaryFile = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException($"Failed to create the temporary file '{temporaryFilePath}'", ex);
+                        }
+
+                        try
+                        {
+                            await memoryStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                            await fileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException($"Failed to write to the temporary file '{temporaryFilePath}'.", ex);
+                        }
+                        finally
+                        {
+                            await fileStream.DisposeAsync().ConfigureAwait(false);
+                        }
+
                         if (localeFileExists)
                         {
-                            FileStream fileStream;
-                            try
-                            {
-                                fileStream = new FileStream(temporaryFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                                createdTemporaryFile = true;
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidOperationException($"Failed to create the temporary file '{temporaryFilePath}'", ex);
-                            }
-
-                            try
-                            {
-                                await memoryStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                                await fileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidOperationException($"Failed to write to the temporary file '{temporaryFilePath}'.", ex);
-                            }
-                            finally
-                            {
-                                await fileStream.DisposeAsync().ConfigureAwait(false);
-                            }
-
                             var backupFilePath = Path.Join(@this.DirectoryPath, string.Format(CultureInfo.InvariantCulture, @this.BackupFileNameFormat, storeInformation.Locale.Name));
                             for (var i = 0; i < 5; i++)
                             {
@@ -256,28 +256,14 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
                         }
                         else
                         {
-                            FileStream fileStream;
                             try
                             {
-                                fileStream = new FileStream(localeFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                                File.Move(temporaryFilePath, localeFilePath);
+                                createdTemporaryFile = false;
                             }
                             catch (Exception ex)
                             {
-                                throw new InvalidOperationException($"Failed to create the missing localization file '{localeFilePath}'.", ex);
-                            }
-
-                            try
-                            {
-                                await memoryStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                                await fileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidOperationException($"Failed to write to the temporary file '{temporaryFilePath}'.", ex);
-                            }
-                            finally
-                            {
-                                await fileStream.DisposeAsync().ConfigureAwait(false);
+                                throw new InvalidOperationException($"An exception occurred while moving the temporary file '{temporaryFilePath}' to '{localeFilePath}'.", ex);
                             }
                         }
                     }
