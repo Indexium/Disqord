@@ -150,6 +150,14 @@ public class DefaultGatewayCacheProvider : IGatewayCacheProvider
     {
         lock (this)
         {
+            if (shardId.Count == -1)
+            {
+                Throw.ArgumentException(
+                    $"A {nameof(ShardId)} created via {nameof(ShardId.FromIndex)} has no shard count and cannot be used to scope a cache reset. " +
+                    $"Pass the shard's actual {nameof(ShardId)} (with its count), or no {nameof(ShardId)} at all to reset the entire cache.",
+                    nameof(shardId));
+            }
+
             if (!shardId.HasCount)
             {
                 _caches.Clear();
