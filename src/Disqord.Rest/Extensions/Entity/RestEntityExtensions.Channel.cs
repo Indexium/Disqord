@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Disqord.Rest.Pagination;
+using Qommon;
 
 namespace Disqord.Rest;
 
@@ -262,6 +263,11 @@ public static partial class RestEntityExtensions
         int limit, FetchDirection direction = FetchDirection.Before, DateTimeOffset? startFromDate = null,
         IRestRequestOptions? options = null)
     {
+        if (direction != FetchDirection.Before)
+        {
+            Throw.ArgumentException("Discord's pinned messages endpoint only supports fetching before a given date.", nameof(direction));
+        }
+
         var client = channel.GetRestClient();
         return client.EnumeratePinnedMessages(channel.Id, limit, startFromDate, options);
     }
