@@ -46,6 +46,7 @@ public static class LocalMessageExtensions
             message.Reference = reference = new LocalMessageReference();
         }
 
+        reference.Type = MessageReferenceType.Default;
         reference.MessageId = messageId;
         reference.ChannelId = Optional.FromNullable(channelId);
         reference.GuildId = Optional.FromNullable(guildId);
