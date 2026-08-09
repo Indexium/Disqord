@@ -155,7 +155,12 @@ public partial class DefaultApplicationCommandLocalizer
                     }
                 }
 
-                if (isInitial)
+                if (isDefaultLocale)
+                {
+                    // The default locale's entry is just a live reference copy, never a translator-provided override.
+                    commandLocalization.Name = commandName;
+                }
+                else if (isInitial)
                 {
                     commandLocalization.Name = GetLocaleDefault(isDefaultLocale, commandName);
                 }
@@ -171,7 +176,11 @@ public partial class DefaultApplicationCommandLocalizer
                 var commandDescription = slashCommand.Description.Value;
                 Guard.IsNotNullOrWhiteSpace(commandDescription);
 
-                if (isInitial)
+                if (isDefaultLocale)
+                {
+                    commandLocalization.Description = commandDescription;
+                }
+                else if (isInitial)
                 {
                     commandLocalization.Description = GetLocaleDefault(isDefaultLocale, commandDescription);
                 }
@@ -210,7 +219,12 @@ public partial class DefaultApplicationCommandLocalizer
                                 isInitialOption = true;
                             }
 
-                            if (isInitialOption)
+                            if (isDefaultLocale)
+                            {
+                                optionLocalization.Name = optionName;
+                                optionLocalization.Description = optionDescription;
+                            }
+                            else if (isInitialOption)
                             {
                                 optionLocalization.Name = GetLocaleDefault(isDefaultLocale, optionName);
                                 optionLocalization.Description = GetLocaleDefault(isDefaultLocale, optionDescription);

@@ -109,4 +109,71 @@ public class DefaultApplicationCommandLocalizerStoreTests
             Directory.Delete(directoryPath, recursive: true);
         }
     }
+
+    [Test]
+    public async Task LocalizeAsync_DefaultLocaleDescriptionChangedSinceLastRun_DoesNotReapplyStaleDescription()
+    {
+        // Arrange
+        var directoryPath = Path.Combine(Path.GetTempPath(), $"disqord-localizer-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directoryPath);
+
+        try
+        {
+            var serializer = new DefaultJsonSerializer();
+
+            var existingModel = new DefaultApplicationCommandLocalizer.LocalizationStoreJsonModel
+            {
+                SchemaVersion = DefaultApplicationCommandLocalizer.SchemaVersion,
+                GlobalLocalizations = new DefaultApplicationCommandLocalizer.LocalizationNodeJsonModel
+                {
+                    SlashCommands = new Dictionary<string, DefaultApplicationCommandLocalizer.CommandLocalizationJsonModel?>
+                    {
+                        ["mycommand"] = new DefaultApplicationCommandLocalizer.CommandLocalizationJsonModel
+                        {
+                            Name = "mycommand",
+                            Description = "The old description.",
+                        },
+                    },
+                },
+            };
+
+            using (var stream = new FileStream(Path.Combine(directoryPath, "en-US.json"), FileMode.Create, FileAccess.Write))
+            {
+                serializer.Serialize(stream, existingModel);
+            }
+
+            var configuration = new DefaultApplicationCommandLocalizerConfiguration
+            {
+                DirectoryPath = directoryPath,
+                DefaultCulture = CultureInfo.GetCultureInfo("en-US"),
+            };
+
+            var localizer = new DefaultApplicationCommandLocalizer(
+                Options.Create(configuration),
+                NullLogger<DefaultApplicationCommandLocalizer>.Instance,
+                serializer);
+
+            var command = new LocalSlashCommand
+            {
+                Name = "mycommand",
+                Description = "The new description.",
+            };
+
+            // Act
+            await localizer.LocalizeAsync(new LocalApplicationCommand[] { command }, new Dictionary<Snowflake, IEnumerable<LocalApplicationCommand>>());
+
+            // Assert
+            Assert.That(command.Description.Value, Is.EqualTo("The new description."));
+            Assert.That(command.DescriptionLocalizations.HasValue, Is.False);
+
+            using var readStream = new FileStream(Path.Combine(directoryPath, "en-US.json"), FileMode.Open, FileAccess.Read);
+            var writtenModel = serializer.Deserialize<DefaultApplicationCommandLocalizer.LocalizationStoreJsonModel>(readStream)!;
+            var writtenCommand = writtenModel.GlobalLocalizations!.SlashCommands.Value!["mycommand"]!;
+            Assert.That(writtenCommand.Description.Value, Is.EqualTo("The new description."));
+        }
+        finally
+        {
+            Directory.Delete(directoryPath, recursive: true);
+        }
+    }
 }
