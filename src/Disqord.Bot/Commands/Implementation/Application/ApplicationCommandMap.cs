@@ -32,7 +32,7 @@ public partial class ApplicationCommandMap : ICommandMap
             if (!TryGetTopLevelNode(commandGuildId, out var node))
                 return null;
 
-            return node.ContextMenuCommands.GetValueOrDefault(contextMenuInteraction.CommandName);
+            return node.ContextMenuCommands.GetValueOrDefault((contextMenuInteraction.CommandName, contextMenuInteraction.CommandType));
         }
 
         if (interaction is ISlashCommandInteraction or IAutoCompleteInteraction)

@@ -95,9 +95,15 @@ public class ApplicationCommandOptionJsonModel : JsonModel
             Guard.IsNotNull(value);
             Guard.HasSizeLessThanOrEqualTo(value, Discord.Limits.ApplicationCommand.MaxOptionAmount);
 
+            var isRequired = true;
             foreach (var option in value)
             {
                 Guard.IsNotNull(option);
+
+                if (!isRequired && option.Required.GetValueOrDefault())
+                    Throw.ArgumentException("Required options must appear before optional ones.", nameof(Options));
+
+                isRequired = option.Required.GetValueOrDefault();
                 option.Validate();
             }
         });

@@ -65,7 +65,7 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
         CacheJsonModel? model;
         try
         {
-            var fileStream = new FileStream(FilePath, FileMode.Open);
+            var fileStream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
 
             try
             {
@@ -142,6 +142,7 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
 
             if (cache.CacheFileExists)
             {
+                var replaced = false;
                 for (var i = 0; i < 5; i++)
                 {
                     if (i > 0)
@@ -152,6 +153,7 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
                         var backupFilePath = BackupFilePath;
                         File.Replace(TemporaryFilePath, FilePath, backupFilePath);
                         createdTemporaryFile = false;
+                        replaced = true;
                         try
                         {
                             File.Delete(backupFilePath);
@@ -166,6 +168,11 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
                     {
                         throw new InvalidOperationException($"An exception occurred while replacing the cache file '{FilePath}' with '{TemporaryFilePath}'.", ex);
                     }
+                }
+
+                if (!replaced)
+                {
+                    throw new InvalidOperationException($"Failed to replace the cache file '{FilePath}' with '{TemporaryFilePath}' after 5 attempts.");
                 }
             }
             else

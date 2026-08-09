@@ -15,7 +15,29 @@ public partial class DefaultApplicationCommandLocalizer
 
         public CultureInfo Locale { get; }
 
-        public bool IsDefaultLocale => Locale.Equals(Localizer.DefaultCulture);
+        public bool IsDefaultLocale
+        {
+            get
+            {
+                var defaultCulture = Localizer.DefaultCulture;
+                if (Locale.Equals(defaultCulture))
+                    return true;
+
+                if (Locale.Name.Length != 2 || Locale.TwoLetterISOLanguageName != defaultCulture.TwoLetterISOLanguageName)
+                    return false;
+
+                foreach (var otherLocaleName in Discord.LocaleNames)
+                {
+                    if (otherLocaleName == Locale.Name)
+                        continue;
+
+                    if (CultureInfo.GetCultureInfo(otherLocaleName).TwoLetterISOLanguageName == defaultCulture.TwoLetterISOLanguageName)
+                        return false;
+                }
+
+                return true;
+            }
+        }
 
         public string LocaleFilePath { get; }
 
@@ -44,8 +66,13 @@ public partial class DefaultApplicationCommandLocalizer
                 return;
             }
 
-            if (model.SchemaVersion >= SchemaVersion)
+            if (model.SchemaVersion == SchemaVersion)
                 return;
+
+            if (model.SchemaVersion > SchemaVersion)
+            {
+                throw new InvalidOperationException($"Unsupported localization schema version '{model.SchemaVersion}'. Current schema version is {SchemaVersion}.");
+            }
 
             do
             {
@@ -85,6 +112,8 @@ public partial class DefaultApplicationCommandLocalizer
             }
 
             var isDefaultLocale = IsDefaultLocale;
+            HashSet<string>? seenContextMenuCommandNames = null;
+            HashSet<string>? seenSlashCommandNames = null;
             foreach (var command in commands)
             {
                 OptionalGuard.HasValue(command.Name);
@@ -95,6 +124,8 @@ public partial class DefaultApplicationCommandLocalizer
                 CommandLocalizationJsonModel? commandLocalization;
                 if (command is LocalContextMenuCommand)
                 {
+                    (seenContextMenuCommandNames ??= new()).Add(commandName);
+
                     if (!localizationNode.ContextMenuCommands.TryGetValue(out var contextMenuLocalizations) || contextMenuLocalizations == null)
                     {
                         localizationNode.ContextMenuCommands = contextMenuLocalizations = new Dictionary<string, CommandLocalizationJsonModel?>();
@@ -109,6 +140,8 @@ public partial class DefaultApplicationCommandLocalizer
                 }
                 else
                 {
+                    (seenSlashCommandNames ??= new()).Add(commandName);
+
                     if (!localizationNode.SlashCommands.TryGetValue(out var slashCommandLocalizations) || slashCommandLocalizations == null)
                     {
                         localizationNode.SlashCommands = slashCommandLocalizations = new Dictionary<string, CommandLocalizationJsonModel?>();
@@ -170,13 +203,14 @@ public partial class DefaultApplicationCommandLocalizer
                             var optionDescription = option.Description.Value;
                             Guard.IsNotNullOrWhiteSpace(optionDescription);
 
-                            if (isInitial || !optionLocalizations.TryGetValue(option.Name.Value, out var optionLocalization) || optionLocalization == null)
+                            var isInitialOption = isInitial;
+                            if (isInitialOption || !optionLocalizations.TryGetValue(option.Name.Value, out var optionLocalization) || optionLocalization == null)
                             {
                                 optionLocalizations[option.Name.Value] = optionLocalization = new OptionLocalizationJsonModel();
-                                isInitial = true;
+                                isInitialOption = true;
                             }
 
-                            if (isInitial)
+                            if (isInitialOption)
                             {
                                 optionLocalization.Name = GetLocaleDefault(isDefaultLocale, optionName);
                                 optionLocalization.Description = GetLocaleDefault(isDefaultLocale, optionDescription);
@@ -196,20 +230,20 @@ public partial class DefaultApplicationCommandLocalizer
 
                             if (option.Options.TryGetValue(out var suboptions) && suboptions != null)
                             {
-                                var isInitialOption = isInitial;
+                                var isInitialSuboption = isInitialOption;
                                 if (!optionLocalization.Options.TryGetValue(out var suboptionLocalizations) || suboptionLocalizations == null)
                                 {
                                     optionLocalization.Options = suboptionLocalizations = new Dictionary<string, OptionLocalizationJsonModel?>();
-                                    isInitialOption = true;
+                                    isInitialSuboption = true;
                                 }
 
-                                ReadOptions(locale, isDefaultLocale, isInitialOption, suboptionLocalizations, suboptions);
+                                ReadOptions(locale, isDefaultLocale, isInitialSuboption, suboptionLocalizations, suboptions);
                             }
 
                             if (!option.Choices.TryGetValue(out var choices) || choices == null)
                                 continue;
 
-                            if (isInitial || !optionLocalization.Choices.TryGetValue(out var choiceLocalizations) || choiceLocalizations == null)
+                            if (isInitialOption || !optionLocalization.Choices.TryGetValue(out var choiceLocalizations) || choiceLocalizations == null)
                             {
                                 optionLocalization.Choices = choiceLocalizations = new Dictionary<string, ChoiceLocalizationJsonModel?>();
                             }
@@ -219,7 +253,7 @@ public partial class DefaultApplicationCommandLocalizer
                                 OptionalGuard.HasValue(choice.Name);
                                 var choiceName = choice.Name.Value;
 
-                                if (isInitial || !choiceLocalizations.TryGetValue(choiceName, out var choiceLocalization) || choiceLocalization == null)
+                                if (isInitialOption || !choiceLocalizations.TryGetValue(choiceName, out var choiceLocalization) || choiceLocalization == null)
                                 {
                                     choiceLocalizations[choiceName] = new ChoiceLocalizationJsonModel
                                     {
@@ -239,6 +273,30 @@ public partial class DefaultApplicationCommandLocalizer
 
                     ReadOptions(Locale, isDefaultLocale, isInitial, optionLocalizations, options);
                 }
+            }
+
+            PruneStaleCommandLocalizations(localizationNode.ContextMenuCommands, seenContextMenuCommandNames);
+            PruneStaleCommandLocalizations(localizationNode.SlashCommands, seenSlashCommandNames);
+        }
+
+        private static void PruneStaleCommandLocalizations(Optional<Dictionary<string, CommandLocalizationJsonModel?>?> localizations, HashSet<string>? seenCommandNames)
+        {
+            if (!localizations.TryGetValue(out var commandLocalizations) || commandLocalizations == null)
+                return;
+
+            var staleNames = new List<string>();
+            foreach (var name in commandLocalizations.Keys)
+            {
+                if (seenCommandNames == null || !seenCommandNames.Contains(name))
+                {
+                    staleNames.Add(name);
+                }
+            }
+
+            var staleNameCount = staleNames.Count;
+            for (var i = 0; i < staleNameCount; i++)
+            {
+                commandLocalizations.Remove(staleNames[i]);
             }
         }
 

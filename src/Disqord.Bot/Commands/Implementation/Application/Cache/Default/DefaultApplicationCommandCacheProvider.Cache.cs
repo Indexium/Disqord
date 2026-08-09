@@ -21,6 +21,8 @@ public partial class DefaultApplicationCommandCacheProvider
 
         public bool HasChanges { get; protected set; }
 
+        public virtual IReadOnlyCollection<Snowflake> GuildIds => Model.GuildCommands?.Keys ?? (IReadOnlyCollection<Snowflake>) Array.Empty<Snowflake>();
+
         public Cache(DefaultApplicationCommandCacheProvider provider, bool cacheFileExists, MemoryStream memoryStream, CacheJsonModel model)
         {
             Provider = provider;
@@ -43,8 +45,13 @@ public partial class DefaultApplicationCommandCacheProvider
                 return;
             }
 
-            if (model.SchemaVersion >= SchemaVersion)
+            if (model.SchemaVersion == SchemaVersion)
                 return;
+
+            if (model.SchemaVersion > SchemaVersion)
+            {
+                throw new InvalidOperationException($"Unsupported cache schema version '{model.SchemaVersion}'. Current schema version is {SchemaVersion}.");
+            }
 
             do
             {
@@ -93,10 +100,11 @@ public partial class DefaultApplicationCommandCacheProvider
 
             foreach (var command in commands)
             {
+                var commandType = CommandJsonModel.GetCommandType(command);
                 CommandJsonModel? matchingModelCommand = null;
                 foreach (var modelCommand in modelCommands)
                 {
-                    if (modelCommand.Name != command.Name)
+                    if (modelCommand.Name != command.Name || modelCommand.Type != commandType)
                         continue;
 
                     matchingModelCommand = modelCommand;
@@ -142,22 +150,28 @@ public partial class DefaultApplicationCommandCacheProvider
                 ? Model.GlobalCommands
                 : Model.GuildCommands?.GetValueOrDefault(guildId.Value);
 
-            var commandIds = commands.ToDictionary(x => x.Name, x => x.Id);
+            var commandIds = commands.ToDictionary(x => (x.Name, x.Type), x => x.Id);
             var newModelCommands = new List<CommandJsonModel>((modelCommands?.Length ?? 0) + fastChanges.CreatedCommands.Count - fastChanges.DeletedCommandIds.Count);
 
             foreach (var unchangedCommand in fastChanges.UnchangedCommands)
             {
+                var unchangedCommandType = CommandJsonModel.GetCommandType(unchangedCommand);
                 CommandJsonModel existingModelCommand = null!;
                 if (modelCommands != null)
                 {
                     foreach (var modelCommand in modelCommands)
                     {
-                        if (unchangedCommand.Name != modelCommand.Name)
+                        if (unchangedCommand.Name != modelCommand.Name || modelCommand.Type != unchangedCommandType)
                             continue;
 
                         existingModelCommand = modelCommand;
                         break;
                     }
+                }
+
+                if (commandIds.TryGetValue((unchangedCommand.Name.Value, unchangedCommandType), out var unchangedCommandId))
+                {
+                    existingModelCommand.Id = unchangedCommandId;
                 }
 
                 newModelCommands.Add(existingModelCommand);
@@ -179,13 +193,20 @@ public partial class DefaultApplicationCommandCacheProvider
                 }
 
                 existingModelCommand.Populate(modifiedCommand, Provider.Serializer);
+
+                var modifiedCommandType = CommandJsonModel.GetCommandType(modifiedCommand);
+                if (commandIds.TryGetValue((modifiedCommand.Name.Value, modifiedCommandType), out var refreshedModifiedCommandId))
+                {
+                    existingModelCommand.Id = refreshedModifiedCommandId;
+                }
+
                 newModelCommands.Add(existingModelCommand);
             }
 
             foreach (var createdCommand in fastChanges.CreatedCommands)
             {
                 var newModelCommand = new CommandJsonModel(createdCommand, Provider.Serializer);
-                newModelCommand.Id = commandIds[createdCommand.Name.Value];
+                newModelCommand.Id = commandIds[(createdCommand.Name.Value, CommandJsonModel.GetCommandType(createdCommand))];
                 newModelCommands.Add(newModelCommand);
             }
 
@@ -193,6 +214,10 @@ public partial class DefaultApplicationCommandCacheProvider
             if (guildId == null)
             {
                 Model.GlobalCommands = modelCommands;
+            }
+            else if (modelCommands.Length == 0)
+            {
+                Model.GuildCommands?.Remove(guildId.Value);
             }
             else
             {

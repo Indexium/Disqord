@@ -95,7 +95,7 @@ public partial class DefaultApplicationCommandCacheProvider
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ApplicationCommandType GetCommandType(LocalApplicationCommand command)
+        internal static ApplicationCommandType GetCommandType(LocalApplicationCommand command)
         {
             return command switch
             {

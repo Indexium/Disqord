@@ -17,6 +17,9 @@ public partial class DefaultApplicationCommandCacheProvider
 
         var modelLocalizations = localizations.Value;
         var localLocalizations = otherLocalizations.Value;
+        if (modelLocalizations == null || localLocalizations == null)
+            return modelLocalizations == null && localLocalizations == null;
+
         if (modelLocalizations.Count == 0 && localLocalizations.Count == 0)
             return true;
 
@@ -46,6 +49,9 @@ public partial class DefaultApplicationCommandCacheProvider
 
         var modelCollection = collection.Value;
         var localCollection = otherCollection.Value;
+        if (modelCollection == null || localCollection == null)
+            return modelCollection == null && localCollection == null;
+
         if (modelCollection.Length == 0 && localCollection.Count == 0)
             return true;
 
@@ -63,7 +69,8 @@ public partial class DefaultApplicationCommandCacheProvider
         return true;
     }
 
-    protected static bool AreEquivalent<T>(Optional<T[]> collection, Optional<IList<T>> otherCollection, IEqualityComparer<T>? equalityComparer = null, IComparer<T>? comparer = null)
+    protected static bool AreEquivalent<T>(Optional<T[]> collection, Optional<IList<T>> otherCollection, IEqualityComparer<T>? equalityComparer = null)
+        where T : notnull
     {
         if (!collection.HasValue && !otherCollection.HasValue)
             return true;
@@ -73,6 +80,9 @@ public partial class DefaultApplicationCommandCacheProvider
 
         var modelCollection = collection.Value;
         var localCollection = otherCollection.Value;
+        if (modelCollection == null || localCollection == null)
+            return modelCollection == null && localCollection == null;
+
         if (modelCollection.Length == 0 && localCollection.Count == 0)
             return true;
 
@@ -80,20 +90,21 @@ public partial class DefaultApplicationCommandCacheProvider
             return false;
 
         equalityComparer ??= EqualityComparer<T>.Default;
-        comparer ??= Comparer<T>.Default;
 
-        var modelArray = new T[modelCollection.Length];
-        Array.Copy(modelCollection, modelArray, modelCollection.Length);
-        Array.Sort(modelArray, comparer);
-
-        var localArray = new T[localCollection.Count];
-        localCollection.CopyTo(localArray, 0);
-        Array.Sort(localArray, comparer);
-
-        for (var i = 0; i < modelArray.Length; i++)
+        // Multiset comparison instead of sort-then-compare, so this never depends on a separate IComparer<T> agreeing with equalityComparer.
+        var remainingOccurrences = new Dictionary<T, int>(equalityComparer);
+        foreach (var modelValue in modelCollection)
         {
-            if (!equalityComparer.Equals(localArray[i], modelArray[i]))
+            remainingOccurrences.TryGetValue(modelValue, out var occurrenceCount);
+            remainingOccurrences[modelValue] = occurrenceCount + 1;
+        }
+
+        foreach (var localValue in localCollection)
+        {
+            if (!remainingOccurrences.TryGetValue(localValue, out var occurrenceCount) || occurrenceCount == 0)
                 return false;
+
+            remainingOccurrences[localValue] = occurrenceCount - 1;
         }
 
         return true;
