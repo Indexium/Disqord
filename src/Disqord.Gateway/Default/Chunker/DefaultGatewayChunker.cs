@@ -142,7 +142,6 @@ public class DefaultGatewayChunker : IGatewayChunker
             operation.OnChunk();
             if (operation.IsTimedOut)
             {
-                operation.Dispose();
                 return default;
             }
 
@@ -150,12 +149,12 @@ public class DefaultGatewayChunker : IGatewayChunker
             if (isLastChunk)
             {
                 operation.Complete();
-                operation.Dispose();
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to handle received chunk.");
+            operation.Throw(ex);
         }
 
         return default;
@@ -229,6 +228,7 @@ public class DefaultGatewayChunker : IGatewayChunker
             var shard = Client.ApiClient.GetShard(model.GuildId);
             if (shard == null)
             {
+                operation.Dispose();
                 Throw.InvalidOperationException("Failed to get the shard of the guild.");
             }
 
@@ -240,15 +240,7 @@ public class DefaultGatewayChunker : IGatewayChunker
                     Op = GatewayPayloadOperation.RequestMembers,
                     D = model
                 }, cancellationToken).ConfigureAwait(false);
-            }
-            catch
-            {
-                _operations.Remove(operation.Nonce);
-                throw;
-            }
 
-            try
-            {
                 return await operation.WaitAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -257,6 +249,11 @@ public class DefaultGatewayChunker : IGatewayChunker
                     continue;
 
                 throw;
+            }
+            finally
+            {
+                _operations.Remove(operation.Nonce);
+                operation.Dispose();
             }
         }
     }
@@ -268,15 +265,17 @@ public class DefaultGatewayChunker : IGatewayChunker
         public bool IsTimedOut => _timeoutCts.IsCancellationRequested;
 
         private readonly TimeSpan _timeout;
-        private Cts _timeoutCts = null!;
+        private readonly Cts _timeoutCts;
         private readonly Dictionary<Snowflake, IMember>? _members;
         private readonly Tcs<IReadOnlyDictionary<Snowflake, IMember>?> _tcs;
         private readonly CancellationTokenRegistration _reg;
+        private readonly CancellationTokenRegistration _timeoutReg;
 
         public ChunkOperation(TimeSpan timeout, bool isQuery, CancellationToken cancellationToken)
         {
             Nonce = Guid.NewGuid().ToString("N");
             _timeout = timeout;
+            _timeoutCts = new Cts(timeout);
 
             _members = isQuery
                 ? new Dictionary<Snowflake, IMember>()
@@ -285,6 +284,7 @@ public class DefaultGatewayChunker : IGatewayChunker
             _tcs = new Tcs<IReadOnlyDictionary<Snowflake, IMember>?>();
 
             _reg = cancellationToken.UnsafeRegister(CancellationCallback, _tcs);
+            _timeoutReg = _timeoutCts.Token.UnsafeRegister(TimeoutCallback, _tcs);
             return;
 
             static void CancellationCallback(object? state, CancellationToken cancellationToken)
@@ -292,20 +292,17 @@ public class DefaultGatewayChunker : IGatewayChunker
                 var tcs = Unsafe.As<Tcs<IReadOnlyList<IMember>>>(state)!;
                 tcs.Cancel(cancellationToken);
             }
-        }
 
-        public Task<IReadOnlyDictionary<Snowflake, IMember>?> WaitAsync()
-        {
-            _timeoutCts = new Cts(_timeout);
-
-            _timeoutCts.Token.UnsafeRegister(CancellationCallback, _tcs);
-            return _tcs.Task;
-
-            static void CancellationCallback(object? state, CancellationToken cancellationToken)
+            static void TimeoutCallback(object? state, CancellationToken cancellationToken)
             {
                 var tcs = Unsafe.As<Tcs<IReadOnlyList<IMember>>>(state)!;
                 tcs.Throw(new TimeoutException());
             }
+        }
+
+        public Task<IReadOnlyDictionary<Snowflake, IMember>?> WaitAsync()
+        {
+            return _tcs.Task;
         }
 
         public void OnChunk()
@@ -353,6 +350,7 @@ public class DefaultGatewayChunker : IGatewayChunker
         public void Dispose()
         {
             _reg.Dispose();
+            _timeoutReg.Dispose();
             _timeoutCts.Dispose();
         }
     }
