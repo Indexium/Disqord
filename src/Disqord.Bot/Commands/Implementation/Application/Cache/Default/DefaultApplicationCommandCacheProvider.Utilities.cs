@@ -69,6 +69,52 @@ public partial class DefaultApplicationCommandCacheProvider
         return true;
     }
 
+    // Order-insensitive: ApplicationCommandMap.Node's ConcurrentDictionary enumeration order for
+    // subcommand/subcommand-group names is not stable across process restarts.
+    protected static bool AreEquivalent<TModel, TLocal>(Optional<TModel[]> collection, Optional<IList<TLocal>> otherCollection)
+        where TModel : IEquatable<TLocal>
+    {
+        if (!collection.HasValue && !otherCollection.HasValue)
+            return true;
+
+        if (collection.HasValue != otherCollection.HasValue)
+            return false;
+
+        var modelCollection = collection.Value;
+        var localCollection = otherCollection.Value;
+        if (modelCollection == null || localCollection == null)
+            return modelCollection == null && localCollection == null;
+
+        if (modelCollection.Length == 0 && localCollection.Count == 0)
+            return true;
+
+        if (modelCollection.Length != localCollection.Count)
+            return false;
+
+        var matchedModelValues = new bool[modelCollection.Length];
+        foreach (var localValue in localCollection)
+        {
+            var foundMatch = false;
+            for (var i = 0; i < modelCollection.Length; i++)
+            {
+                if (matchedModelValues[i])
+                    continue;
+
+                if (!modelCollection[i].Equals(localValue))
+                    continue;
+
+                matchedModelValues[i] = true;
+                foundMatch = true;
+                break;
+            }
+
+            if (!foundMatch)
+                return false;
+        }
+
+        return true;
+    }
+
     protected static bool AreEquivalent<T>(Optional<T[]> collection, Optional<IList<T>> otherCollection, IEqualityComparer<T>? equalityComparer = null)
         where T : notnull
     {

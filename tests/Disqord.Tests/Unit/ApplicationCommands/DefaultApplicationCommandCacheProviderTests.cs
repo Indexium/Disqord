@@ -174,6 +174,76 @@ public class DefaultApplicationCommandCacheProviderTests : SerializationTestBase
         Assert.That(equal, Is.False);
     }
 
+    [Test]
+    public void CommandOptions_SubcommandsReordered_AreEqual()
+    {
+        // Arrange
+        var command = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "alpha", Description = "Alpha." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+            },
+        };
+
+        var model = new DefaultApplicationCommandCacheProvider.CommandJsonModel(command, Serializer);
+
+        var reorderedCommand = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "alpha", Description = "Alpha." },
+            },
+        };
+
+        // Act
+        var equal = model.Equals(reorderedCommand);
+
+        // Assert
+        Assert.That(equal, Is.True);
+    }
+
+    [Test]
+    public void CommandOptions_SubcommandContentChanged_AreNotEqual()
+    {
+        // Arrange
+        var command = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "alpha", Description = "Alpha." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+            },
+        };
+
+        var model = new DefaultApplicationCommandCacheProvider.CommandJsonModel(command, Serializer);
+
+        var changedCommand = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "gamma", Description = "Gamma." },
+            },
+        };
+
+        // Act
+        var equal = model.Equals(changedCommand);
+
+        // Assert
+        Assert.That(equal, Is.False);
+    }
+
     private DefaultApplicationCommandCacheProvider.ChoiceJsonModel RoundTripChoice(LocalSlashCommandOptionChoice choice)
     {
         var model = new DefaultApplicationCommandCacheProvider.ChoiceJsonModel(choice, Serializer);
