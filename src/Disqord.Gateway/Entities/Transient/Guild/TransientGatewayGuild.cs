@@ -117,7 +117,7 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
 
     public int MemberCount => Model.MemberCount;
 
-    public IReadOnlyDictionary<Snowflake, IVoiceState> VoiceStates => _voiceStates ??= Model.VoiceStates.ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IVoiceState> VoiceStates => _voiceStates ??= Model.VoiceStates.SafelyDeserializeItems<VoiceStateJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.UserId,
         (model, client) => new TransientVoiceState(client, model) as IVoiceState);
 
@@ -132,7 +132,7 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
 
     private IReadOnlyDictionary<Snowflake, IMember>? _members;
 
-    public IReadOnlyDictionary<Snowflake, IGuildChannel> Channels => _channels ??= Model.Channels.ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IGuildChannel> Channels => _channels ??= Model.Channels.SafelyDeserializeItems<ChannelJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.Id,
         (model, client) => TransientGuildChannel.Create(client, model) as IGuildChannel);
 
@@ -144,13 +144,13 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
 
     private IReadOnlyDictionary<Snowflake, IPresence>? _presences;
 
-    public IReadOnlyDictionary<Snowflake, IStage> Stages => _stages ??= Model.StageInstances.ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IStage> Stages => _stages ??= Model.StageInstances.SafelyDeserializeItems<StageInstanceJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.Id,
         (model, client) => new TransientStage(client, model) as IStage);
 
     private IReadOnlyDictionary<Snowflake, IStage>? _stages;
 
-    public IReadOnlyDictionary<Snowflake, IGuildEvent> GuildEvents => _guildEvents ??= Model.GuildScheduledEvents.ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IGuildEvent> GuildEvents => _guildEvents ??= Model.GuildScheduledEvents.SafelyDeserializeItems<GuildScheduledEventJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.Id,
         (model, client) => new TransientGuildEvent(client, model) as IGuildEvent);
 

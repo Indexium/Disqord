@@ -22,23 +22,23 @@ public class GatewayGuildJsonModel : GuildJsonModel
     public int MemberCount;
 
     [JsonProperty("voice_states")]
-    public VoiceStateJsonModel[] VoiceStates = null!;
+    public IJsonArray VoiceStates = null!;
 
     [JsonProperty("members")]
     public IJsonArray Members = null!;
 
     [JsonProperty("channels")]
-    public ChannelJsonModel[] Channels = null!;
+    public IJsonArray Channels = null!;
 
     [JsonProperty("threads")]
-    public ChannelJsonModel[] Threads = null!;
+    public IJsonArray Threads = null!;
 
     [JsonProperty("presences")]
     public IJsonArray Presences = null!;
 
     [JsonProperty("stage_instances")]
-    public StageInstanceJsonModel[] StageInstances = null!;
+    public IJsonArray StageInstances = null!;
 
     [JsonProperty("guild_scheduled_events")]
-    public GuildScheduledEventJsonModel[] GuildScheduledEvents = null!;
+    public IJsonArray GuildScheduledEvents = null!;
 }

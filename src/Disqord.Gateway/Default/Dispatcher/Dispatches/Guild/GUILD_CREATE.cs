@@ -102,7 +102,7 @@ public class GuildCreateDispatchHandler : DispatchHandler<GatewayGuildJsonModel,
 
         if (CacheProvider.TryGetChannels(model.Id, out var channelCache))
         {
-            foreach (var channelModel in model.Channels)
+            foreach (var channelModel in model.Channels.SafelyDeserializeItems<ChannelJsonModel>(Logger))
             {
                 if (isPending)
                 {
@@ -117,7 +117,7 @@ public class GuildCreateDispatchHandler : DispatchHandler<GatewayGuildJsonModel,
                 }
             }
 
-            foreach (var threadModel in model.Threads)
+            foreach (var threadModel in model.Threads.SafelyDeserializeItems<ChannelJsonModel>(Logger))
             {
                 if (isPending)
                 {
@@ -158,7 +158,7 @@ public class GuildCreateDispatchHandler : DispatchHandler<GatewayGuildJsonModel,
 
         if (CacheProvider.TryGetVoiceStates(model.Id, out var voiceStateCache))
         {
-            foreach (var voiceStateModel in model.VoiceStates)
+            foreach (var voiceStateModel in model.VoiceStates.SafelyDeserializeItems<VoiceStateJsonModel>(Logger))
             {
                 if (isPending)
                 {
@@ -192,7 +192,7 @@ public class GuildCreateDispatchHandler : DispatchHandler<GatewayGuildJsonModel,
 
         if (CacheProvider.TryGetStages(model.Id, out var stageCache))
         {
-            foreach (var stageModel in model.StageInstances)
+            foreach (var stageModel in model.StageInstances.SafelyDeserializeItems<StageInstanceJsonModel>(Logger))
             {
                 if (isPending)
                 {
@@ -209,7 +209,7 @@ public class GuildCreateDispatchHandler : DispatchHandler<GatewayGuildJsonModel,
 
         if (CacheProvider.TryGetGuildEvents(model.Id, out var guildEventsCache))
         {
-            foreach (var guildEventModel in model.GuildScheduledEvents)
+            foreach (var guildEventModel in model.GuildScheduledEvents.SafelyDeserializeItems<GuildScheduledEventJsonModel>(Logger))
             {
                 if (isPending)
                 {
