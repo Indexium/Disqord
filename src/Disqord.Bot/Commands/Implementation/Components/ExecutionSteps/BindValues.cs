@@ -161,13 +161,15 @@ public static partial class DefaultComponentExecutionSteps
             }
 
             var rawArgument = GetRawArgumentFromModalComponent(modalComponent);
-            if (rawArgument.Count > 1)
+            var rawArgumentTypeInformation = parameter.GetTypeInformation();
+            if (rawArgument.Count == 0 && !rawArgumentTypeInformation.IsStringLike)
             {
-                var typeInformation = parameter.GetTypeInformation();
-                if (!typeInformation.IsMultiString && !typeInformation.IsEnumerable)
-                {
-                    Throw.InvalidOperationException($"Invalid modal multi-string argument for parameter {parameter.Name} ({typeInformation.ActualType}); must not contain multiple strings as the parameter accepts a single value.");
-                }
+                return;
+            }
+
+            if (rawArgument.Count > 1 && !rawArgumentTypeInformation.IsMultiString && !rawArgumentTypeInformation.IsEnumerable)
+            {
+                Throw.InvalidOperationException($"Invalid modal multi-string argument for parameter {parameter.Name} ({rawArgumentTypeInformation.ActualType}); must not contain multiple strings as the parameter accepts a single value.");
             }
 
             context.SetRawArgument(parameter, rawArgument);
