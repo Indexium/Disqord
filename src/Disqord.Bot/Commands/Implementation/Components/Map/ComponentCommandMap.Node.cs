@@ -228,15 +228,17 @@ public partial class ComponentCommandMap
                 return false;
             }
 
+            ComponentCommand? bestCommand = null;
+            List<MultiString>? bestRawArgumentSlices = null;
+            var bestWildcardCount = int.MaxValue;
+
             foreach (var (patternCommand, pattern) in commandsAndPatterns)
             {
-                command = patternCommand;
-
-                List<MultiString>? rawArgumentSlices = null;
                 var patternSlices = pattern.Slices;
-                if (patternSlices.Length != sliceCount)
+                if (patternSlices.Length != sliceCount || pattern.WildcardCount >= bestWildcardCount)
                     continue;
 
+                List<MultiString>? rawArgumentSlices = null;
                 var slicesMatch = true;
                 for (var j = 0; j < sliceCount; j++)
                 {
@@ -255,11 +257,22 @@ public partial class ComponentCommandMap
                     }
                 }
 
-                if (slicesMatch)
-                {
-                    rawArguments = rawArgumentSlices;
-                    return true;
-                }
+                if (!slicesMatch)
+                    continue;
+
+                bestCommand = patternCommand;
+                bestRawArgumentSlices = rawArgumentSlices;
+                bestWildcardCount = pattern.WildcardCount;
+
+                if (bestWildcardCount == 0)
+                    break;
+            }
+
+            if (bestCommand != null)
+            {
+                command = bestCommand;
+                rawArguments = bestRawArgumentSlices;
+                return true;
             }
 
             command = null;
@@ -276,6 +289,8 @@ public partial class ComponentCommandMap
         {
             public ReadOnlyMemory<char>[] Slices { get; }
 
+            public int WildcardCount { get; }
+
             public PatternInformation(ReadOnlyMemory<char> pattern)
             {
                 var splitter = new PatternSplitter(pattern);
@@ -287,6 +302,15 @@ public partial class ComponentCommandMap
 
                 // TODO: check if there's at least one slice?
                 Slices = slices.ToArray();
+
+                var wildcardCount = 0;
+                foreach (var slice in Slices)
+                {
+                    if (slice.Length == 1 && slice.Span[0] == '*')
+                        wildcardCount++;
+                }
+
+                WildcardCount = wildcardCount;
             }
         }
 
