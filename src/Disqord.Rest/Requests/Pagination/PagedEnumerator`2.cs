@@ -117,16 +117,20 @@ public abstract class PagedEnumerator<TPage, TEntity> : IPagedEnumerator<TEntity
             return false;
         }
 
-        var consumed = GetConsumedCount(page);
-        if (consumed < PageSize)
+        var isDone = RemainingCount == 0;
+        if (!isDone)
         {
-            // If the consumed count is less than the page size,
-            // it means there are no more items beyond the ones we just received.
-            RemainingCount = 0;
-        }
-        else
-        {
-            RemainingCount -= consumed;
+            var consumed = GetConsumedCount(page);
+            if (consumed < PageSize)
+            {
+                // If the consumed count is less than the page size,
+                // it means there are no more items beyond the ones we just received.
+                RemainingCount = 0;
+            }
+            else
+            {
+                RemainingCount -= consumed;
+            }
         }
 
         return true;
