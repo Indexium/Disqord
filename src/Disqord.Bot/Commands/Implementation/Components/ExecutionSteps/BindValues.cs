@@ -129,7 +129,21 @@ public static partial class DefaultComponentExecutionSteps
                     var attachmentIds = fileUploadComponent.AttachmentIds;
                     if (!typeInformation.IsEnumerable)
                     {
-                        context.SetArgument(parameter, entityInteraction.Entities.Attachments[attachmentIds[0]]);
+                        if (attachmentIds.Count == 0)
+                        {
+                            if (!typeInformation.IsOptional)
+                            {
+                                Throw.InvalidOperationException($"No file was uploaded for the required parameter '{parameter.Name}'.");
+                            }
+                        }
+                        else if (attachmentIds.Count > 1)
+                        {
+                            Throw.InvalidOperationException($"Multiple files were uploaded for the parameter '{parameter.Name}', which only accepts a single file.");
+                        }
+                        else
+                        {
+                            context.SetArgument(parameter, entityInteraction.Entities.Attachments[attachmentIds[0]]);
+                        }
                     }
                     else
                     {
