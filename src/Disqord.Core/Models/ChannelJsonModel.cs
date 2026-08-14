@@ -52,7 +52,7 @@ public class ChannelJsonModel : JsonModel
     public Optional<Snowflake> OwnerId;
 
     [JsonProperty("application_id")]
-    public Optional<Snowflake> ApplicationId;
+    public Optional<Snowflake?> ApplicationId;
 
     [JsonProperty("parent_id")]
     public Optional<Snowflake?> ParentId;

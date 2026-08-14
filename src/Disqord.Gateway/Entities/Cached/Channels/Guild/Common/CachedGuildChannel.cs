@@ -20,6 +20,9 @@ public abstract class CachedGuildChannel : CachedChannel, IGuildChannel
     public GuildChannelFlags Flags { get; private set; }
 
     /// <inheritdoc/>
+    public bool IsObfuscated => Flags.HasFlag(GuildChannelFlags.Obfuscated);
+
+    /// <inheritdoc/>
     public string Mention => Disqord.Mention.Channel(this);
 
     protected CachedGuildChannel(IGatewayClient client, ChannelJsonModel model)

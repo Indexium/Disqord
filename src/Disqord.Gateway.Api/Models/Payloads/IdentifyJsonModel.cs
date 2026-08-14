@@ -29,6 +29,9 @@ public class IdentifyJsonModel : JsonModel
     [JsonProperty("intents")]
     public GatewayIntents Intents;
 
+    [JsonProperty("capabilities")]
+    public Optional<GatewayCapabilities> Capabilities;
+
     public class PropertiesJsonModel : JsonModel
     {
         [JsonProperty("os")]

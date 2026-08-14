@@ -1,12 +1,9 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Disqord.Gateway;
+﻿using Disqord.Gateway;
 using Disqord.Gateway.Api;
 using Disqord.Gateway.Api.Default;
 using Disqord.Gateway.Api.Models;
-using Disqord.Logging;
 using Disqord.Serialization.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -45,6 +42,7 @@ public class DefaultGatewayRateLimiterTests
     {
         public ShardId Id => throw new NotImplementedException();
         public GatewayIntents Intents => throw new NotImplementedException();
+        public GatewayCapabilities Capabilities => throw new NotImplementedException();
         public int LargeGuildThreshold => throw new NotImplementedException();
         public UpdatePresenceJsonModel? Presence { get; set; }
         public IGatewayApiClient ApiClient => throw new NotImplementedException();
@@ -57,7 +55,7 @@ public class DefaultGatewayRateLimiterTests
         public Uri? ResumeUri => throw new NotImplementedException();
         public ShardState State => throw new NotImplementedException();
         public CancellationToken StoppingToken => throw new NotImplementedException();
-        public Microsoft.Extensions.Logging.ILogger Logger => NullLogger.Instance;
+        public ILogger Logger => NullLogger.Instance;
         public Task SendAsync(GatewayPayloadJsonModel payload, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task WaitForReadyAsync(CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task RunAsync(Uri? initialUri, CancellationToken stoppingToken) => throw new NotImplementedException();

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -20,6 +20,9 @@ public class DefaultShard : IShard
 
     /// <inheritdoc/>
     public GatewayIntents Intents { get; }
+
+    /// <inheritdoc/>
+    public GatewayCapabilities Capabilities { get; }
 
     /// <inheritdoc/>
     public int LargeGuildThreshold { get; }
@@ -101,6 +104,7 @@ public class DefaultShard : IShard
         Id = id;
         var configuration = options.Value;
         Intents = configuration.Intents;
+        Capabilities = configuration.Capabilities;
         LargeGuildThreshold = configuration.LargeGuildThreshold;
         Presence = configuration.Presence;
         Logger = loggerFactory.CreateLogger($"Shard #{id.Index}");
@@ -667,6 +671,9 @@ public class DefaultShard : IShard
                         Browser = "Disqord"
                     },
                     Intents = Intents,
+                    Capabilities = Capabilities != GatewayCapabilities.None
+                        ? Capabilities
+                        : Optional<GatewayCapabilities>.Empty,
                     LargeThreshold = LargeGuildThreshold,
                     Shard = Id.Count > 1
                         ? new[]
