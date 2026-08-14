@@ -87,6 +87,9 @@ public class ChannelJsonModel : JsonModel
     [JsonProperty("permissions")]
     public Optional<Permissions> Permissions;
 
+    [JsonProperty("app_permissions")]
+    public Optional<Permissions> AppPermissions;
+
     [JsonProperty("flags")]
     public Optional<GuildChannelFlags> Flags;
 
