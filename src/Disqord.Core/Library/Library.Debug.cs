@@ -10,7 +10,7 @@ public static partial class Library
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class Debug
     {
-        public static bool LogSafeDeserializationExceptions;
+        public static bool LogSafeDeserializationExceptions = true;
 
         public static bool DumpJson;
 
