@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Disqord.Models;
 using Microsoft.Extensions.Logging;
 
@@ -23,6 +23,12 @@ public class TransientThreadAuditLogChanges : IThreadAuditLogChanges
 
     /// <inheritdoc/>
     public AuditLogChange<ChannelType> Type { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<bool> AllowsInvitation { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<GuildChannelFlags> Flags { get; }
 
     public TransientThreadAuditLogChanges(IClient client, AuditLogEntryJsonModel model)
     {
@@ -59,6 +65,16 @@ public class TransientThreadAuditLogChanges : IThreadAuditLogChanges
                 case "type":
                 {
                     Type = AuditLogChange<ChannelType>.Convert(change);
+                    break;
+                }
+                case "invitable":
+                {
+                    AllowsInvitation = AuditLogChange<bool>.Convert(change);
+                    break;
+                }
+                case "flags":
+                {
+                    Flags = AuditLogChange<GuildChannelFlags>.Convert(change);
                     break;
                 }
                 default:

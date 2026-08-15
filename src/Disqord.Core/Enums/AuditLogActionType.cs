@@ -65,8 +65,41 @@ public enum AuditLogActionType
 
     ApplicationCommandPermissionsUpdate = 121,
 
+    SoundboardSoundCreated = 130,
+    SoundboardSoundUpdated = 131,
+    SoundboardSoundDeleted = 132,
+
     AutoModerationRuleCreated = 140,
     AutoModerationRuleUpdated = 141,
     AutoModerationRuleDeleted = 142,
-    AutoModerationMessageBlocked = 143
+    AutoModerationMessageBlocked = 143,
+    AutoModerationMessageFlagged = 144,
+    AutoModerationMemberTimedOut = 145,
+    AutoModerationMemberQuarantined = 146,
+
+    CreatorMonetizationRequestCreated = 150,
+    CreatorMonetizationTermsAccepted = 151,
+
+    OnboardingPromptCreated = 163,
+    OnboardingPromptUpdated = 164,
+    OnboardingPromptDeleted = 165,
+    OnboardingCreated = 166,
+    OnboardingUpdated = 167,
+
+    GuildHomeItemFeatured = 171,
+    GuildHomeItemRemoved = 172,
+
+    HarmfulLinksMessageBlocked = 180,
+
+    HomeSettingsCreated = 190,
+    HomeSettingsUpdated = 191,
+
+    VoiceChannelStatusCreated = 192,
+    VoiceChannelStatusDeleted = 193,
+
+    GuildEventExceptionCreated = 200,
+    GuildEventExceptionUpdated = 201,
+    GuildEventExceptionDeleted = 202,
+
+    GuildProfileUpdated = 211
 }

@@ -15,4 +15,6 @@ public interface IRoleAuditLogChanges
     AuditLogChange<bool> IsMentionable { get; }
 
     AuditLogChange<string> UnicodeEmoji { get; }
+
+    AuditLogChange<RoleColors?> Colors { get; }
 }

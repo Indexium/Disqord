@@ -26,6 +26,9 @@ public class TransientRoleAuditLogChanges : IRoleAuditLogChanges
     /// <inheritdoc/>
     public AuditLogChange<string> UnicodeEmoji { get; }
 
+    /// <inheritdoc/>
+    public AuditLogChange<RoleColors?> Colors { get; }
+
     public TransientRoleAuditLogChanges(IClient client, AuditLogEntryJsonModel model)
     {
         for (var i = 0; i < model.Changes.Value.Length; i++)
@@ -66,6 +69,18 @@ public class TransientRoleAuditLogChanges : IRoleAuditLogChanges
                 case "unicode_emoji":
                 {
                     UnicodeEmoji = AuditLogChange<string>.Convert(change);
+                    break;
+                }
+                case "colors":
+                {
+                    Colors = AuditLogChange<RoleColors?>.Convert<RoleColorsJsonModel?>(change, static colorsModel =>
+                    {
+                        if (colorsModel == null || (colorsModel.PrimaryColor == 0 && !colorsModel.SecondaryColor.HasValue))
+                            return null;
+
+                        return new RoleColors(colorsModel.PrimaryColor, colorsModel.SecondaryColor, colorsModel.TertiaryColor);
+                    });
+
                     break;
                 }
                 default:

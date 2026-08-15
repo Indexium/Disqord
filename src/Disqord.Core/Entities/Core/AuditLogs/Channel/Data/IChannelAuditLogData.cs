@@ -23,4 +23,18 @@ public interface IChannelAuditLogData
     Optional<ChannelType> Type { get; }
 
     Optional<string?> Region { get; }
+
+    Optional<GuildChannelFlags> Flags { get; }
+
+    Optional<VideoQualityMode> VideoQualityMode { get; }
+
+    Optional<TimeSpan> DefaultAutomaticArchiveDuration { get; }
+
+    Optional<TimeSpan> DefaultThreadSlowmode { get; }
+
+    Optional<IReadOnlyList<IForumTag>> AvailableTags { get; }
+
+    Optional<IEmoji?> DefaultReactionEmoji { get; }
+
+    Optional<string?> Template { get; }
 }

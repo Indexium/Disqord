@@ -1,4 +1,3 @@
 namespace Disqord.AuditLogs;
 
-public interface IAutoModerationRuleCreatedAuditLog : IDataAuditLog<IAutoModerationRuleAuditLogData>, ITargetedAuditLog<IAutoModerationRule>
-{ }
+public interface IAutoModerationRuleCreatedAuditLog : IDataAuditLog<IAutoModerationRuleAuditLogData>, ITargetedAuditLog<IAutoModerationRule>;

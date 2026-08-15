@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections.Generic;
 
 namespace Disqord.AuditLogs;
@@ -8,6 +9,7 @@ public interface IAutoModerationRuleAuditLogChanges
 
     AuditLogChange<AutoModerationEventType> EventType { get; }
 
+    [Obsolete("This value is never present on update entries.")]
     AuditLogChange<AutoModerationRuleTrigger> Trigger { get; }
 
     AuditLogChange<IAutoModerationTriggerMetadata> TriggerMetadata { get; }

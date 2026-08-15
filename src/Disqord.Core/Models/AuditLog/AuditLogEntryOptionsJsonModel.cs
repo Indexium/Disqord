@@ -28,7 +28,23 @@ public class AuditLogEntryOptionsJsonModel : JsonModel
     ///     <para/>
     ///     <see cref="AuditLogActionType.MessageUnpinned"/>
     ///     <para/>
+    ///     <see cref="AuditLogActionType.StageCreated"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.StageUpdated"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.StageDeleted"/>
+    ///     <para/>
     ///     <see cref="AuditLogActionType.AutoModerationMessageBlocked"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMessageFlagged"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMemberTimedOut"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMemberQuarantined"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.VoiceChannelStatusCreated"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.VoiceChannelStatusDeleted"/>
     /// </summary>
     [JsonProperty("channel_id")]
     public Optional<Snowflake> ChannelId;
@@ -91,12 +107,24 @@ public class AuditLogEntryOptionsJsonModel : JsonModel
 
     /// <summary>
     ///     <see cref="AuditLogActionType.AutoModerationMessageBlocked"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMessageFlagged"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMemberTimedOut"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMemberQuarantined"/>
     /// </summary>
     [JsonProperty("auto_moderation_rule_name")]
     public Optional<string> AutoModerationRuleName;
 
     /// <summary>
     ///     <see cref="AuditLogActionType.AutoModerationMessageBlocked"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMessageFlagged"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMemberTimedOut"/>
+    ///     <para/>
+    ///     <see cref="AuditLogActionType.AutoModerationMemberQuarantined"/>
     /// </summary>
     [JsonProperty("auto_moderation_rule_trigger_type")]
     public Optional<AutoModerationRuleTrigger> AutoModerationRuleTriggerType;
@@ -106,5 +134,12 @@ public class AuditLogEntryOptionsJsonModel : JsonModel
     ///     <para />
     ///     <see cref="AuditLogActionType.MemberRolesUpdated"/>
     /// </summary>
+    [JsonProperty("integration_type")]
     public Optional<string> IntegrationType;
+
+    /// <summary>
+    ///     <see cref="AuditLogActionType.VoiceChannelStatusCreated"/>
+    /// </summary>
+    [JsonProperty("status")]
+    public Optional<string> Status;
 }

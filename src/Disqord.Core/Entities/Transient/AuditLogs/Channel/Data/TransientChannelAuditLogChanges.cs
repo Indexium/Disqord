@@ -35,6 +35,27 @@ public class TransientChannelAuditLogChanges : IChannelAuditLogChanges
     /// <inheritdoc/>
     public AuditLogChange<string?> Region { get; }
 
+    /// <inheritdoc/>
+    public AuditLogChange<GuildChannelFlags> Flags { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<VideoQualityMode> VideoQualityMode { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<TimeSpan> DefaultAutomaticArchiveDuration { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<TimeSpan> DefaultThreadSlowmode { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<IReadOnlyList<IForumTag>> AvailableTags { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<IEmoji?> DefaultReactionEmoji { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<string?> Template { get; }
+
     public TransientChannelAuditLogChanges(IClient client, AuditLogEntryJsonModel model)
     {
         for (var i = 0; i < model.Changes.Value.Length; i++)
@@ -91,6 +112,53 @@ public class TransientChannelAuditLogChanges : IChannelAuditLogChanges
                 case "rtc_region":
                 {
                     Region = AuditLogChange<string?>.Convert(change);
+                    break;
+                }
+                case "flags":
+                {
+                    Flags = AuditLogChange<GuildChannelFlags>.Convert(change);
+                    break;
+                }
+                case "video_quality_mode":
+                {
+                    VideoQualityMode = AuditLogChange<VideoQualityMode>.Convert(change);
+                    break;
+                }
+                case "default_auto_archive_duration":
+                {
+                    DefaultAutomaticArchiveDuration = AuditLogChange<TimeSpan>.Convert<int>(change, x => TimeSpan.FromMinutes(x));
+                    break;
+                }
+                case "default_thread_rate_limit_per_user":
+                {
+                    DefaultThreadSlowmode = AuditLogChange<TimeSpan>.Convert<int>(change, x => TimeSpan.FromSeconds(x));
+                    break;
+                }
+                case "available_tags":
+                {
+                    AvailableTags = AuditLogChange<IReadOnlyList<IForumTag>>.Convert<ForumTagJsonModel[]>(change,
+                        static models => models.ToReadOnlyList(static model => new TransientForumTag(model)));
+
+                    break;
+                }
+                case "default_reaction_emoji":
+                {
+                    DefaultReactionEmoji = AuditLogChange<IEmoji?>.Convert<ForumDefaultReactionJsonModel?>(change, static model =>
+                    {
+                        if (model == null)
+                            return null;
+
+                        if (model.EmojiId != null)
+                            return new TransientCustomEmoji(model.EmojiId.Value);
+
+                        return new TransientEmoji(model.EmojiName!);
+                    });
+
+                    break;
+                }
+                case "template":
+                {
+                    Template = AuditLogChange<string?>.Convert(change);
                     break;
                 }
                 default:

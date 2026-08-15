@@ -77,6 +77,12 @@ public class TransientGuildAuditLogChanges : IGuildAuditLogChanges
     /// <inheritdoc/>
     public AuditLogChange<Snowflake?> SafetyAlertsChannelId { get; }
 
+    /// <inheritdoc/>
+    public AuditLogChange<SystemChannelFlags> SystemChannelFlags { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<bool> IsBoostProgressBarEnabled { get; }
+
     public TransientGuildAuditLogChanges(IClient client, AuditLogJsonModel? auditLogJsonModel, AuditLogEntryJsonModel model)
     {
         for (var i = 0; i < model.Changes.Value.Length; i++)
@@ -206,6 +212,16 @@ public class TransientGuildAuditLogChanges : IGuildAuditLogChanges
                 case "safety_alerts_channel_id":
                 {
                     SafetyAlertsChannelId = AuditLogChange<Snowflake?>.Convert(change);
+                    break;
+                }
+                case "system_channel_flags":
+                {
+                    SystemChannelFlags = AuditLogChange<SystemChannelFlags>.Convert(change);
+                    break;
+                }
+                case "premium_progress_bar_enabled":
+                {
+                    IsBoostProgressBarEnabled = AuditLogChange<bool>.Convert(change);
                     break;
                 }
                 default:

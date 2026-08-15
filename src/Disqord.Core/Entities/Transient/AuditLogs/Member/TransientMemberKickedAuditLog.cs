@@ -24,7 +24,7 @@ public class TransientMemberKickedAuditLog : TransientAuditLog, IMemberKickedAud
     private IUser? _target;
 
     /// <inheritdoc/>
-    public string? IntegrationType => Model.Options.Value.IntegrationType.GetValueOrDefault();
+    public string? IntegrationType => Model.Options.GetValueOrDefault()?.IntegrationType.GetValueOrDefault();
 
     public TransientMemberKickedAuditLog(IClient client, Snowflake guildId, AuditLogJsonModel? auditLogJsonModel, AuditLogEntryJsonModel model)
         : base(client, guildId, auditLogJsonModel, model)

@@ -27,6 +27,9 @@ public class TransientInviteAuditLogData : IInviteAuditLogData
     /// <inheritdoc/>
     public Optional<TimeSpan> MaxAge { get; }
 
+    /// <inheritdoc/>
+    public Optional<InviteFlags> Flags { get; }
+
     public TransientInviteAuditLogData(IClient client, AuditLogEntryJsonModel model, bool isCreated)
     {
         var changes = new TransientInviteAuditLogChanges(client, model);
@@ -39,6 +42,7 @@ public class TransientInviteAuditLogData : IInviteAuditLogData
             Uses = changes.Uses.NewValue;
             IsTemporary = changes.IsTemporary.NewValue;
             MaxAge = changes.MaxAge.NewValue;
+            Flags = changes.Flags.NewValue;
         }
         else
         {
@@ -49,6 +53,7 @@ public class TransientInviteAuditLogData : IInviteAuditLogData
             Uses = changes.Uses.OldValue;
             IsTemporary = changes.IsTemporary.OldValue;
             MaxAge = changes.MaxAge.OldValue;
+            Flags = changes.Flags.OldValue;
         }
     }
 }

@@ -28,6 +28,11 @@ public class TransientOverwriteAuditLogChanges : IOverwriteAuditLogChanges
                     Denied = AuditLogChange<Permissions>.Convert(change);
                     break;
                 }
+                case "id":
+                case "type":
+                {
+                    break;
+                }
                 default:
                 {
                     client.Logger.LogDebug("Unknown key {0} for {1}", change.Key, this);

@@ -22,4 +22,18 @@ public interface IChannelAuditLogChanges
     AuditLogChange<ChannelType> Type { get; }
 
     AuditLogChange<string?> Region { get; }
+
+    AuditLogChange<GuildChannelFlags> Flags { get; }
+
+    AuditLogChange<VideoQualityMode> VideoQualityMode { get; }
+
+    AuditLogChange<TimeSpan> DefaultAutomaticArchiveDuration { get; }
+
+    AuditLogChange<TimeSpan> DefaultThreadSlowmode { get; }
+
+    AuditLogChange<IReadOnlyList<IForumTag>> AvailableTags { get; }
+
+    AuditLogChange<IEmoji?> DefaultReactionEmoji { get; }
+
+    AuditLogChange<string?> Template { get; }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Disqord.Models;
+using Microsoft.Extensions.Logging;
 using Qommon;
 
 namespace Disqord.AuditLogs;
@@ -48,6 +49,19 @@ public class TransientAuditLog : TransientClientEntity<AuditLogEntryJsonModel>, 
     }
 
     internal static IAuditLog Create(IClient client, Snowflake guildId, AuditLogJsonModel? log, AuditLogEntryJsonModel entry)
+    {
+        try
+        {
+            return CreateCore(client, guildId, log, entry);
+        }
+        catch (Exception ex)
+        {
+            client.Logger.LogWarning(ex, "Failed to create the audit log entry {0} of type {1}. Falling back to an unknown audit log.", entry.Id, entry.ActionType);
+            return new TransientUnknownAuditLog(client, guildId, log, entry);
+        }
+    }
+
+    private static IAuditLog CreateCore(IClient client, Snowflake guildId, AuditLogJsonModel? log, AuditLogEntryJsonModel entry)
     {
         return entry.ActionType switch
         {
@@ -129,11 +143,23 @@ public class TransientAuditLog : TransientClientEntity<AuditLogEntryJsonModel>, 
             // Application Command Permission
             AuditLogActionType.ApplicationCommandPermissionsUpdate => new TransientApplicationCommandPermissionsUpdatedAuditLog(client, guildId, log, entry),
 
+            // Soundboard
+            AuditLogActionType.SoundboardSoundCreated => new TransientSoundboardSoundCreatedAuditLog(client, guildId, log, entry),
+            AuditLogActionType.SoundboardSoundUpdated => new TransientSoundboardSoundUpdatedAuditLog(client, guildId, log, entry),
+            AuditLogActionType.SoundboardSoundDeleted => new TransientSoundboardSoundDeletedAuditLog(client, guildId, log, entry),
+
             // AutoModeration
             AuditLogActionType.AutoModerationRuleCreated => new TransientAutoModerationRuleCreatedAuditLog(client, guildId, log, entry),
             AuditLogActionType.AutoModerationRuleUpdated => new TransientAutoModerationRuleUpdatedAuditLog(client, guildId, log, entry),
             AuditLogActionType.AutoModerationRuleDeleted => new TransientAutoModerationRuleDeletedAuditLog(client, guildId, log, entry),
             AuditLogActionType.AutoModerationMessageBlocked => new TransientAutoModerationMessageBlockedAuditLog(client, guildId, log, entry),
+            AuditLogActionType.AutoModerationMessageFlagged => new TransientAutoModerationMessageFlaggedAuditLog(client, guildId, log, entry),
+            AuditLogActionType.AutoModerationMemberTimedOut => new TransientAutoModerationMemberTimedOutAuditLog(client, guildId, log, entry),
+            AuditLogActionType.AutoModerationMemberQuarantined => new TransientAutoModerationMemberQuarantinedAuditLog(client, guildId, log, entry),
+
+            // Voice Channel Status
+            AuditLogActionType.VoiceChannelStatusCreated => new TransientVoiceChannelStatusCreatedAuditLog(client, guildId, log, entry),
+            AuditLogActionType.VoiceChannelStatusDeleted => new TransientVoiceChannelStatusDeletedAuditLog(client, guildId, log, entry),
 
             _ => new TransientUnknownAuditLog(client, guildId, log, entry)
         };

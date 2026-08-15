@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Disqord.Models;
 using Qommon;
 
@@ -24,6 +24,12 @@ public class TransientThreadAuditLogData : IThreadAuditLogData
     /// <inheritdoc/>
     public Optional<ChannelType> Type { get; }
 
+    /// <inheritdoc/>
+    public Optional<bool> AllowsInvitation { get; }
+
+    /// <inheritdoc/>
+    public Optional<GuildChannelFlags> Flags { get; }
+
     public TransientThreadAuditLogData(IClient client, AuditLogEntryJsonModel model, bool isCreated)
     {
         var changes = new TransientThreadAuditLogChanges(client, model);
@@ -35,6 +41,8 @@ public class TransientThreadAuditLogData : IThreadAuditLogData
             AutomaticArchiveDuration = changes.AutomaticArchiveDuration.NewValue;
             Slowmode = changes.Slowmode.NewValue;
             Type = changes.Type.NewValue;
+            AllowsInvitation = changes.AllowsInvitation.NewValue;
+            Flags = changes.Flags.NewValue;
         }
         else
         {
@@ -44,6 +52,8 @@ public class TransientThreadAuditLogData : IThreadAuditLogData
             AutomaticArchiveDuration = changes.AutomaticArchiveDuration.OldValue;
             Slowmode = changes.Slowmode.OldValue;
             Type = changes.Type.OldValue;
+            AllowsInvitation = changes.AllowsInvitation.OldValue;
+            Flags = changes.Flags.OldValue;
         }
     }
 }

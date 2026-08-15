@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disqord.AuditLogs;
@@ -64,7 +65,17 @@ public static partial class RestClientExtensions
         IRestRequestOptions? options, CancellationToken cancellationToken)
         where TAuditLog : IAuditLog
     {
-        var type = GetAuditLogActionType(typeof(TAuditLog));
+        AuditLogActionType? type;
+        try
+        {
+            type = AuditLogActionTypeCache<TAuditLog>.Value;
+        }
+        catch (TypeInitializationException exception) when (exception.InnerException != null)
+        {
+            ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+            throw;
+        }
+
         var model = await client.ApiClient.FetchAuditLogsAsync(guildId, limit, actorId, type, direction, startFromId, options, cancellationToken).ConfigureAwait(false);
         var list = new List<TAuditLog>();
         foreach (var entry in model.AuditLogEntries)
@@ -245,6 +256,23 @@ public static partial class RestClientExtensions
         if (typeof(IApplicationCommandPermissionsUpdatedAuditLog).IsAssignableFrom(type))
             return AuditLogActionType.ApplicationCommandPermissionsUpdate;
 
+        // Soundboard
+        if (typeof(ISoundboardSoundCreatedAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.SoundboardSoundCreated;
+
+        if (typeof(ISoundboardSoundUpdatedAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.SoundboardSoundUpdated;
+
+        if (typeof(ISoundboardSoundDeletedAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.SoundboardSoundDeleted;
+
+        // Voice Channel Status
+        if (typeof(IVoiceChannelStatusCreatedAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.VoiceChannelStatusCreated;
+
+        if (typeof(IVoiceChannelStatusDeletedAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.VoiceChannelStatusDeleted;
+
         // AutoModeration
         if (typeof(IAutoModerationRuleCreatedAuditLog).IsAssignableFrom(type))
             return AuditLogActionType.AutoModerationRuleCreated;
@@ -258,6 +286,21 @@ public static partial class RestClientExtensions
         if (typeof(IAutoModerationMessageBlockedAuditLog).IsAssignableFrom(type))
             return AuditLogActionType.AutoModerationMessageBlocked;
 
+        if (typeof(IAutoModerationMessageFlaggedAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.AutoModerationMessageFlagged;
+
+        if (typeof(IAutoModerationMemberTimedOutAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.AutoModerationMemberTimedOut;
+
+        if (typeof(IAutoModerationMemberQuarantinedAuditLog).IsAssignableFrom(type))
+            return AuditLogActionType.AutoModerationMemberQuarantined;
+
         return Throw.ArgumentOutOfRangeException<AuditLogActionType?>(nameof(type));
+    }
+
+    private static class AuditLogActionTypeCache<TAuditLog>
+        where TAuditLog : IAuditLog
+    {
+        public static readonly AuditLogActionType? Value = GetAuditLogActionType(typeof(TAuditLog));
     }
 }

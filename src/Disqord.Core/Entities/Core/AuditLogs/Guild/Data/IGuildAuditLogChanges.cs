@@ -50,4 +50,8 @@ public interface IGuildAuditLogChanges
     AuditLogChange<Snowflake?> SystemChannelId { get; }
 
     AuditLogChange<Snowflake?> SafetyAlertsChannelId { get; }
+
+    AuditLogChange<SystemChannelFlags> SystemChannelFlags { get; }
+
+    AuditLogChange<bool> IsBoostProgressBarEnabled { get; }
 }

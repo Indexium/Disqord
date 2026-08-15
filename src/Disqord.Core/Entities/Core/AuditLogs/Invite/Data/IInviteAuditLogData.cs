@@ -18,4 +18,6 @@ public interface IInviteAuditLogData
     Optional<bool> IsTemporary { get; }
 
     Optional<TimeSpan> MaxAge { get; }
+
+    Optional<InviteFlags> Flags { get; }
 }

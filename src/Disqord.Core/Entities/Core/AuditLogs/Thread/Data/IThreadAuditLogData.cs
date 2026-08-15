@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Qommon;
 
 namespace Disqord.AuditLogs;
@@ -16,4 +16,8 @@ public interface IThreadAuditLogData
     Optional<TimeSpan> Slowmode { get; }
 
     Optional<ChannelType> Type { get; }
+
+    Optional<bool> AllowsInvitation { get; }
+
+    Optional<GuildChannelFlags> Flags { get; }
 }
