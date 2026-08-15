@@ -251,6 +251,22 @@ public static partial class RestEntityExtensions
         return client.CreateBanAsync(guild.Id, userId, reason, deleteMessageDuration, options, cancellationToken);
     }
 
+    public static IPagedEnumerable<IBulkBanResponse> EnumerateBanCreation(this IGuild guild,
+        IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null)
+    {
+        var client = guild.GetRestClient();
+        return client.EnumerateBanCreation(guild.Id, userIds, deleteMessageDuration, options);
+    }
+
+    public static Task<IBulkBanResponse> CreateBansAsync(this IGuild guild,
+        IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var client = guild.GetRestClient();
+        return client.CreateBansAsync(guild.Id, userIds, deleteMessageDuration, options, cancellationToken);
+    }
+
     public static Task DeleteBanAsync(this IGuild guild,
         Snowflake userId,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)

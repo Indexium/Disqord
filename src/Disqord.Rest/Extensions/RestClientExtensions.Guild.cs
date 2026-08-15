@@ -471,6 +471,124 @@ public static partial class RestClientExtensions
         return client.ApiClient.DeleteBanAsync(guildId, userId, options, cancellationToken);
     }
 
+    /// <summary>
+    ///     Bans the users with the specified IDs from the specified guild, enumerating the results in batches.
+    /// </summary>
+    /// <remarks>
+    ///     Each iteration yields the <see cref="IBulkBanResponse"/> for a single batch of up to
+    ///     <see cref="Discord.Limits.Rest.BulkBanUsersPageSize"/> users.
+    ///     <para/>
+    ///     Users that could not be banned (including a whole batch Discord rejects with
+    ///     <see cref="RestApiErrorCode.FailedToBanUsers"/>) are reported in <see cref="IBulkBanResponse.FailedUserIds"/>;
+    ///     this method never throws that error.
+    /// </remarks>
+    /// <param name="client"> The REST client. </param>
+    /// <param name="guildId"> The ID of the guild to ban the users from. </param>
+    /// <param name="userIds"> The IDs of the users to ban. </param>
+    /// <param name="deleteMessageDuration"> If specified, deletes each banned user's messages sent within this duration. </param>
+    /// <param name="options"> The optional request options. </param>
+    /// <returns>
+    ///     A paged enumerable yielding an <see cref="IBulkBanResponse"/> for each batch of banned users.
+    /// </returns>
+    public static IPagedEnumerable<IBulkBanResponse> EnumerateBanCreation(this IRestClient client,
+        Snowflake guildId, IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null)
+    {
+        Guard.IsNotNull(userIds);
+
+        var deleteMessageSeconds = Optional.FromNullable((int?) deleteMessageDuration?.TotalSeconds);
+        return PagedEnumerable.Create((state, cancellationToken) =>
+        {
+            var (client, guildId, userIds, deleteMessageSeconds, options) = state;
+            return new CreateBansPagedEnumerator(client, guildId, userIds, deleteMessageSeconds, options, cancellationToken);
+        }, (client, guildId, userIds.Distinct().ToArray(), deleteMessageSeconds, options));
+    }
+
+    /// <summary>
+    ///     Bans the users with the specified IDs from the specified guild.
+    /// </summary>
+    /// <remarks>
+    ///     <inheritdoc cref="EnumerateBanCreation"/>
+    /// </remarks>
+    /// <param name="client"> The REST client. </param>
+    /// <param name="guildId"> The ID of the guild to ban the users from. </param>
+    /// <param name="userIds"> The IDs of the users to ban. </param>
+    /// <param name="deleteMessageDuration"> If specified, deletes each banned user's messages sent within this duration. </param>
+    /// <param name="options"> The optional request options. </param>
+    /// <param name="cancellationToken"> The cancellation token to observe. </param>
+    /// <returns>
+    ///     An <see cref="IBulkBanResponse"/> aggregating the banned and failed user IDs.
+    /// </returns>
+    public static async Task<IBulkBanResponse> CreateBansAsync(this IRestClient client,
+        Snowflake guildId, IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(userIds);
+
+        var ids = userIds.Distinct().ToArray();
+        var deleteMessageSeconds = Optional.FromNullable((int?) deleteMessageDuration?.TotalSeconds);
+
+        if (ids.Length == 0)
+        {
+            return new TransientBulkBanResponse(new GuildBulkBanJsonModel
+            {
+                BannedUsers = [],
+                FailedUsers = []
+            });
+        }
+
+        if (ids.Length <= Discord.Limits.Rest.BulkBanUsersPageSize)
+        {
+            var model = await client.InternalCreateBansAsync(guildId, ids, deleteMessageSeconds, options, cancellationToken).ConfigureAwait(false);
+            return new TransientBulkBanResponse(model);
+        }
+
+        var bannedUserIds = new List<Snowflake>();
+        var failedUserIds = new List<Snowflake>();
+        var enumerator = client.EnumerateBanCreation(guildId, ids, deleteMessageDuration, options).GetAsyncEnumerator(cancellationToken);
+        await using (enumerator.ConfigureAwait(false))
+        {
+            while (await enumerator.MoveNextAsync().ConfigureAwait(false))
+            {
+                foreach (var response in enumerator.Current)
+                {
+                    bannedUserIds.AddRange(response.BannedUserIds);
+                    failedUserIds.AddRange(response.FailedUserIds);
+                }
+            }
+        }
+
+        return new TransientBulkBanResponse(new GuildBulkBanJsonModel
+        {
+            BannedUsers = bannedUserIds.ToArray(),
+            FailedUsers = failedUserIds.ToArray()
+        });
+    }
+
+    internal static async Task<GuildBulkBanJsonModel> InternalCreateBansAsync(this IRestClient client,
+        Snowflake guildId, ArraySegment<Snowflake> userIds, Optional<int> deleteMessageSeconds,
+        IRestRequestOptions? options, CancellationToken cancellationToken)
+    {
+        var content = new CreateBansJsonRestRequestContent
+        {
+            UserIds = userIds,
+            DeleteMessageSeconds = deleteMessageSeconds
+        };
+
+        try
+        {
+            return await client.ApiClient.CreateBansAsync(guildId, content, options, cancellationToken).ConfigureAwait(false);
+        }
+        catch (RestApiException exception) when (exception.IsError(RestApiErrorCode.FailedToBanUsers))
+        {
+            return new GuildBulkBanJsonModel
+            {
+                BannedUsers = [],
+                FailedUsers = userIds.ToArray()
+            };
+        }
+    }
+
     public static async Task<IReadOnlyList<IRole>> FetchRolesAsync(this IRestClient client,
         Snowflake guildId,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
