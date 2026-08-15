@@ -46,6 +46,14 @@ public interface IThreadChannel : IMessageGuildChannel, IChannelEntity
     int MemberCount { get; }
 
     /// <summary>
+    ///     Gets the total number of messages ever sent in this thread.
+    /// </summary>
+    /// <remarks>
+    ///     Unlike <see cref="MessageCount"/>, this is not decremented when a message is deleted.
+    /// </remarks>
+    int TotalMessageCount { get; }
+
+    /// <summary>
     ///     Gets whether this thread is archived.
     /// </summary>
     [Obsolete("Use Metadata.IsArchived instead.")]

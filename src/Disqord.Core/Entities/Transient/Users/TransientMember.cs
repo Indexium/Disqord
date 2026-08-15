@@ -5,10 +5,11 @@ using Qommon;
 
 namespace Disqord;
 
-public class TransientMember : TransientUser, IMember, ITransientClientEntity<MemberJsonModel>
+public class TransientMember(IClient client, Snowflake guildId, MemberJsonModel model)
+    : TransientUser(client, model.User.Value), IMember, ITransientClientEntity<MemberJsonModel>
 {
     /// <inheritdoc/>
-    public Snowflake GuildId { get; }
+    public Snowflake GuildId { get; } = guildId;
 
     /// <inheritdoc/>
     public string? Nick => Model.Nick.GetValueOrDefault();
@@ -41,12 +42,29 @@ public class TransientMember : TransientUser, IMember, ITransientClientEntity<Me
     public MemberFlags GuildFlags => Model.Flags;
 
     /// <inheritdoc/>
-    public new MemberJsonModel Model { get; }
-
-    public TransientMember(IClient client, Snowflake guildId, MemberJsonModel model)
-        : base(client, model.User.Value)
+    public IAvatarDecoration? GuildAvatarDecoration
     {
-        GuildId = guildId;
-        Model = model;
+        get
+        {
+            if (!Model.AvatarDecorationData.HasValue || Model.AvatarDecorationData.Value == null)
+                return null;
+
+            return field ??= new TransientAvatarDecoration(Model.AvatarDecorationData.Value);
+        }
     }
+
+    /// <inheritdoc/>
+    public ICollectibles? GuildCollectibles
+    {
+        get
+        {
+            if (!Model.Collectibles.HasValue || Model.Collectibles.Value == null)
+                return null;
+
+            return field ??= new TransientCollectibles(Model.Collectibles.Value);
+        }
+    }
+
+    /// <inheritdoc/>
+    public new MemberJsonModel Model { get; } = model;
 }

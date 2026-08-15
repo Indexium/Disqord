@@ -54,4 +54,20 @@ public interface IUser : ISnowflakeEntity, INamableEntity, IMentionableEntity, I
     ///     The primary guild or <see langword="null"/> if the user has no primary guild set.
     /// </returns>
     IUserPrimaryGuild? PrimaryGuild { get; }
+
+    /// <summary>
+    ///     Gets the avatar decoration of this user.
+    /// </summary>
+    /// <returns>
+    ///     The avatar decoration or <see langword="null"/> if the user has no avatar decoration set.
+    /// </returns>
+    IAvatarDecoration? AvatarDecoration { get; }
+
+    /// <summary>
+    ///     Gets the collectibles of this user.
+    /// </summary>
+    /// <returns>
+    ///     The collectibles or <see langword="null"/> if the user has no collectibles.
+    /// </returns>
+    ICollectibles? Collectibles { get; }
 }

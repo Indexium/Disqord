@@ -138,7 +138,7 @@ public static partial class RestEntityExtensions
         return client.FetchActiveThreadsAsync(guild.Id, options, cancellationToken);
     }
 
-    public static Task<IMember?> FetchMemberAsync(this IGuild guild,
+    public static Task<IRestMember?> FetchMemberAsync(this IGuild guild,
         Snowflake memberId,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -179,7 +179,7 @@ public static partial class RestEntityExtensions
         return client.SetCurrentMemberNickAsync(guild.Id, nick, options, cancellationToken);
     }
 
-    public static Task<IMember> ModifyMemberAsync(this IGuild guild,
+    public static Task<IRestMember> ModifyMemberAsync(this IGuild guild,
         Snowflake memberId, Action<ModifyMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -187,7 +187,7 @@ public static partial class RestEntityExtensions
         return client.ModifyMemberAsync(guild.Id, memberId, action, options, cancellationToken);
     }
 
-    public static Task<IMember> ModifyCurrentMemberAsync(this IGuild guild,
+    public static Task<IRestMember> ModifyCurrentMemberAsync(this IGuild guild,
         Action<ModifyCurrentMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {

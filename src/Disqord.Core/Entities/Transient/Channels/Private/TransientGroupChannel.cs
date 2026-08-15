@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Disqord.Models;
 using Qommon;
 using Qommon.Collections.ReadOnly;
@@ -6,7 +6,8 @@ using Qommon.Collections.ReadOnly;
 namespace Disqord;
 
 /// <inheritdoc cref="IGroupChannel"/>
-public class TransientGroupChannel : TransientPrivateChannel, IGroupChannel
+public class TransientGroupChannel(IClient client, ChannelJsonModel model)
+    : TransientPrivateChannel(client, model), IGroupChannel
 {
     /// <inheritdoc/>
     public string? IconHash => Model.Icon.GetValueOrDefault();
@@ -23,7 +24,6 @@ public class TransientGroupChannel : TransientPrivateChannel, IGroupChannel
     /// <inheritdoc/>
     public Snowflake? ApplicationId => Model.ApplicationId.GetValueOrDefault();
 
-    public TransientGroupChannel(IClient client, ChannelJsonModel model)
-        : base(client, model)
-    { }
+    /// <inheritdoc/>
+    public bool IsManaged => Model.Managed.GetValueOrDefault();
 }

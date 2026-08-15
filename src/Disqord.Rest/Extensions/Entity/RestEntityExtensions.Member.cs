@@ -14,7 +14,7 @@ public static partial class RestEntityExtensions
         return client.FetchGuildAsync(member.GuildId, withCounts, options, cancellationToken)!;
     }
 
-    public static Task<IMember> ModifyAsync(this IMember member,
+    public static Task<IRestMember> ModifyAsync(this IMember member,
         Action<ModifyMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {

@@ -34,4 +34,19 @@ public interface IRoleTags
     ///     Gets whether the role is the role Nitro boosters receive when boosting the guild.
     /// </summary>
     bool IsNitroBooster { get; }
+
+    /// <summary>
+    ///     Gets the ID of this role's subscription SKU and listing.
+    /// </summary>
+    Snowflake? SubscriptionListingId { get; }
+
+    /// <summary>
+    ///     Gets whether this role is available for purchase.
+    /// </summary>
+    bool IsAvailableForPurchase { get; }
+
+    /// <summary>
+    ///     Gets whether this role is a linked role which can be acquired through guild connections.
+    /// </summary>
+    bool HasGuildConnections { get; }
 }

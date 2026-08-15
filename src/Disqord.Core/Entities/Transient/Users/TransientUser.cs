@@ -5,7 +5,8 @@ using Qommon;
 
 namespace Disqord;
 
-public class TransientUser : TransientClientEntity<UserJsonModel>, IUser
+public class TransientUser(IClient client, UserJsonModel model)
+    : TransientClientEntity<UserJsonModel>(client, model), IUser
 {
     /// <inheritdoc/>
     public virtual Snowflake Id => Model.Id;
@@ -37,10 +38,33 @@ public class TransientUser : TransientClientEntity<UserJsonModel>, IUser
             if (!Model.PrimaryGuild.HasValue || Model.PrimaryGuild.Value == null)
                 return null;
 
-            return _primaryGuild ??= new TransientUserPrimaryGuild(Model.PrimaryGuild.Value);
+            return field ??= new TransientUserPrimaryGuild(Model.PrimaryGuild.Value);
         }
     }
-    private IUserPrimaryGuild? _primaryGuild;
+
+    /// <inheritdoc/>
+    public virtual IAvatarDecoration? AvatarDecoration
+    {
+        get
+        {
+            if (!Model.AvatarDecorationData.HasValue || Model.AvatarDecorationData.Value == null)
+                return null;
+
+            return field ??= new TransientAvatarDecoration(Model.AvatarDecorationData.Value);
+        }
+    }
+
+    /// <inheritdoc/>
+    public virtual ICollectibles? Collectibles
+    {
+        get
+        {
+            if (!Model.Collectibles.HasValue || Model.Collectibles.Value == null)
+                return null;
+
+            return field ??= new TransientCollectibles(Model.Collectibles.Value);
+        }
+    }
 
     /// <inheritdoc/>
     public virtual string Mention => Disqord.Mention.User(this);
@@ -62,10 +86,6 @@ public class TransientUser : TransientClientEntity<UserJsonModel>, IUser
 #pragma warning restore CS0618
         }
     }
-
-    public TransientUser(IClient client, UserJsonModel model)
-        : base(client, model)
-    { }
 
     public override string ToString()
     {

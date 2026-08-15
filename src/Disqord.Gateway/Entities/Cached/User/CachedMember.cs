@@ -41,6 +41,12 @@ public class CachedMember : CachedShareeUser, IMember
     /// <inheritdoc/>
     public MemberFlags GuildFlags { get; private set; }
 
+    /// <inheritdoc/>
+    public IAvatarDecoration? GuildAvatarDecoration { get; private set; }
+
+    /// <inheritdoc/>
+    public ICollectibles? GuildCollectibles { get; private set; }
+
     public CachedMember(CachedSharedUser sharedUser, Snowflake guildId, MemberJsonModel model)
         : base(sharedUser)
     {
@@ -80,5 +86,11 @@ public class CachedMember : CachedShareeUser, IMember
             TimedOutUntil = model.CommunicationDisabledUntil.Value;
 
         GuildFlags = model.Flags;
+
+        if (model.AvatarDecorationData.HasValue)
+            GuildAvatarDecoration = model.AvatarDecorationData.Value != null ? new TransientAvatarDecoration(model.AvatarDecorationData.Value) : null;
+
+        if (model.Collectibles.HasValue)
+            GuildCollectibles = model.Collectibles.Value != null ? new TransientCollectibles(model.Collectibles.Value) : null;
     }
 }

@@ -33,6 +33,9 @@ public class CachedThreadChannel : CachedMessageGuildChannel, IThreadChannel, IJ
     public int MemberCount { get; private set; }
 
     /// <inheritdoc/>
+    public int TotalMessageCount { get; private set; }
+
+    /// <inheritdoc/>
     public bool IsArchived => Metadata.IsArchived;
 
     /// <inheritdoc/>
@@ -76,6 +79,9 @@ public class CachedThreadChannel : CachedMessageGuildChannel, IThreadChannel, IJ
 
         if (model.MemberCount.HasValue)
             MemberCount = model.MemberCount.Value;
+
+        if (model.TotalMessageSent.HasValue)
+            TotalMessageCount = model.TotalMessageSent.Value;
 
         if (model.ThreadMetadata.HasValue)
         {

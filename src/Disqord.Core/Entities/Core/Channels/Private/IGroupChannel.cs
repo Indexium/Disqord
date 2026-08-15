@@ -29,4 +29,9 @@ public interface IGroupChannel : IPrivateChannel
     ///     The ID of the application or <see langword="null"/> if the channel was not created by a bot.
     /// </returns>
     Snowflake? ApplicationId { get; }
+
+    /// <summary>
+    ///     Gets whether this channel is managed by an application.
+    /// </summary>
+    bool IsManaged { get; }
 }

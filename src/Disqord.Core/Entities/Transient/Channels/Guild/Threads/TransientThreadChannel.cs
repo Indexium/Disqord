@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Disqord.Models;
+using Qommon;
 
 namespace Disqord;
 
 /// <inheritdoc cref="IThreadChannel"/>
-public class TransientThreadChannel : TransientMessageGuildChannel, IThreadChannel
+public class TransientThreadChannel(IClient client, ChannelJsonModel model)
+    : TransientMessageGuildChannel(client, model), IThreadChannel
 {
     /// <inheritdoc/>
     public override Snowflake? CategoryId => throw new InvalidOperationException($"{nameof(TransientThreadChannel)} does not support {nameof(CategoryId)}.");
@@ -41,6 +43,9 @@ public class TransientThreadChannel : TransientMessageGuildChannel, IThreadChann
     /// <inheritdoc/>
     public int MemberCount => Model.MemberCount.Value;
 
+    /// <inheritdoc/>
+    public int TotalMessageCount => Model.TotalMessageSent.GetValueOrDefault();
+
     public IThreadMetadata Metadata => _metadata ??= new TransientThreadMetadata(Model.ThreadMetadata.Value);
 
     private TransientThreadMetadata? _metadata;
@@ -56,8 +61,4 @@ public class TransientThreadChannel : TransientMessageGuildChannel, IThreadChann
             return Model.AppliedTags.Value;
         }
     }
-
-    public TransientThreadChannel(IClient client, ChannelJsonModel model)
-        : base(client, model)
-    { }
 }

@@ -73,4 +73,9 @@ public interface IRole : ISnowflakeEntity, IGuildEntity, INamableEntity, IMentio
     ///     </example>
     /// </summary>
     IRoleTags Tags { get; }
+
+    /// <summary>
+    ///     Gets the flags of this role.
+    /// </summary>
+    RoleFlags Flags { get; }
 }

@@ -160,6 +160,11 @@ public interface IGuild : ISnowflakeEntity, INamableEntity, IJsonUpdatable<Guild
     int? MaxVideoMemberCount { get; }
 
     /// <summary>
+    ///     Gets the max stage video member count of this guild.
+    /// </summary>
+    int? MaxStageVideoMemberCount { get; }
+
+    /// <summary>
     ///     Gets the NSFW level of this guild.
     /// </summary>
     GuildNsfwLevel NsfwLevel { get; }
@@ -178,4 +183,12 @@ public interface IGuild : ISnowflakeEntity, INamableEntity, IJsonUpdatable<Guild
     ///     Gets the safety alerts channel ID of this guild.
     /// </summary>
     Snowflake? SafetyAlertsChannelId { get; }
+
+    /// <summary>
+    ///     Gets the security incidents data of this guild.
+    /// </summary>
+    /// <returns>
+    ///     The incidents data or <see langword="null"/> if this guild has no incidents data.
+    /// </returns>
+    IGuildIncidents? Incidents { get; }
 }

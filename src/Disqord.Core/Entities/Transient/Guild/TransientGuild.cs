@@ -8,7 +8,8 @@ using Qommon.Collections.ReadOnly;
 namespace Disqord;
 // If you update any members of this class, make sure to do the same for the gateway equivalent.
 
-public class TransientGuild : TransientClientEntity<GuildJsonModel>, IGuild
+public class TransientGuild(IClient client, GuildJsonModel model)
+    : TransientClientEntity<GuildJsonModel>(client, model), IGuild
 {
     /// <inheritdoc/>
     public Snowflake Id => Model.Id;
@@ -120,6 +121,9 @@ public class TransientGuild : TransientClientEntity<GuildJsonModel>, IGuild
     public int? MaxVideoMemberCount => Model.MaxVideoChannelUsers.GetValueOrNullable();
 
     /// <inheritdoc/>
+    public int? MaxStageVideoMemberCount => Model.MaxStageVideoChannelUsers.GetValueOrNullable();
+
+    /// <inheritdoc/>
     public GuildNsfwLevel NsfwLevel => Model.NsfwLevel;
 
     /// <inheritdoc/>
@@ -143,7 +147,15 @@ public class TransientGuild : TransientClientEntity<GuildJsonModel>, IGuild
     /// <inheritdoc/>
     public Snowflake? SafetyAlertsChannelId => Model.SafetyAlertsChannelId;
 
-    public TransientGuild(IClient client, GuildJsonModel model)
-        : base(client, model)
-    { }
+    /// <inheritdoc/>
+    public IGuildIncidents? Incidents
+    {
+        get
+        {
+            if (!Model.IncidentsData.HasValue || Model.IncidentsData.Value == null)
+                return null;
+
+            return field ??= new TransientGuildIncidents(Model.IncidentsData.Value);
+        }
+    }
 }

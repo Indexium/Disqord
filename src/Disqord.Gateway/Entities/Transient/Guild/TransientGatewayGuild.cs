@@ -9,7 +9,8 @@ using Qommon.Collections.ReadOnly;
 
 namespace Disqord;
 
-public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJsonModel>, IGatewayGuild, ITransientEntity<GuildJsonModel>
+public class TransientGatewayGuild(IClient client, GatewayGuildJsonModel model)
+    : TransientGatewayClientEntity<GatewayGuildJsonModel>(client, model), IGatewayGuild, ITransientEntity<GuildJsonModel>
 {
     public Snowflake Id => Model.Id;
 
@@ -37,7 +38,7 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
 
     public GuildContentFilterLevel ContentFilterLevel => Model.ExplicitContentFilter;
 
-    public IReadOnlyDictionary<Snowflake, IRole> Roles => _roles ??= Model.Roles.ToReadOnlyDictionary((Client, Id),
+    public IReadOnlyDictionary<Snowflake, IRole> Roles => field ??= Model.Roles.ToReadOnlyDictionary((Client, Id),
         (model, _) => model.Id,
         (model, state) =>
         {
@@ -45,17 +46,13 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
             return new TransientRole(client, guildId, model) as IRole;
         });
 
-    private IReadOnlyDictionary<Snowflake, IRole>? _roles;
-
-    public IReadOnlyDictionary<Snowflake, IGuildEmoji> Emojis => _emojis ??= Model.Emojis.ToReadOnlyDictionary((Client, Id),
+    public IReadOnlyDictionary<Snowflake, IGuildEmoji> Emojis => field ??= Model.Emojis.ToReadOnlyDictionary((Client, Id),
         (model, _) => model.Id!.Value,
         (model, state) =>
         {
             var (client, guildId) = state;
             return new TransientGuildEmoji(client, guildId, model) as IGuildEmoji;
         });
-
-    private IReadOnlyDictionary<Snowflake, IGuildEmoji>? _emojis;
 
     public IReadOnlyList<string> Features => Model.Features;
 
@@ -89,6 +86,8 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
 
     public int? MaxVideoMemberCount => Model.MaxVideoChannelUsers.GetValueOrNullable();
 
+    public int? MaxStageVideoMemberCount => Model.MaxStageVideoChannelUsers.GetValueOrNullable();
+
     public GuildNsfwLevel NsfwLevel => Model.NsfwLevel;
 
     public IReadOnlyDictionary<Snowflake, IGuildSticker> Stickers
@@ -98,16 +97,26 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
             if (!Model.Stickers.HasValue)
                 return ReadOnlyDictionary<Snowflake, IGuildSticker>.Empty;
 
-            return _stickers ??= Model.Stickers.Value.ToReadOnlyDictionary(Client,
+            return field ??= Model.Stickers.Value.ToReadOnlyDictionary(Client,
                 (model, _) => model.Id,
                 (model, client) => new TransientGuildSticker(client, model) as IGuildSticker);
         }
     }
-    private IReadOnlyDictionary<Snowflake, IGuildSticker>? _stickers;
 
     public bool IsBoostProgressBarEnabled => Model.PremiumProgressBarEnabled;
 
     public Snowflake? SafetyAlertsChannelId => Model.SafetyAlertsChannelId;
+
+    public IGuildIncidents? Incidents
+    {
+        get
+        {
+            if (!Model.IncidentsData.HasValue || Model.IncidentsData.Value == null)
+                return null;
+
+            return field ??= new TransientGuildIncidents(Model.IncidentsData.Value);
+        }
+    }
 
     public DateTimeOffset JoinedAt => Model.JoinedAt;
 
@@ -117,50 +126,34 @@ public class TransientGatewayGuild : TransientGatewayClientEntity<GatewayGuildJs
 
     public int MemberCount => Model.MemberCount;
 
-    public IReadOnlyDictionary<Snowflake, IVoiceState> VoiceStates => _voiceStates ??= Model.VoiceStates.SafelyDeserializeItems<VoiceStateJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IVoiceState> VoiceStates => field ??= Model.VoiceStates.SafelyDeserializeItems<VoiceStateJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.UserId,
         (model, client) => new TransientVoiceState(client, model) as IVoiceState);
 
-    private IReadOnlyDictionary<Snowflake, IVoiceState>? _voiceStates;
-
-    public IReadOnlyDictionary<Snowflake, IMember> Members => _members ??= Model.Members.SafelyDeserializeItems<MemberJsonModel>(Client.Logger).ToReadOnlyDictionary((Client, Id),
+    public IReadOnlyDictionary<Snowflake, IMember> Members => field ??= Model.Members.SafelyDeserializeItems<MemberJsonModel>(Client.Logger).ToReadOnlyDictionary((Client, Id),
         (model, _) => model.User.Value.Id, (model, state) =>
         {
             var (client, guildId) = state;
             return new TransientMember(client, guildId, model) as IMember;
         });
 
-    private IReadOnlyDictionary<Snowflake, IMember>? _members;
-
-    public IReadOnlyDictionary<Snowflake, IGuildChannel> Channels => _channels ??= Model.Channels.SafelyDeserializeItems<ChannelJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IGuildChannel> Channels => field ??= Model.Channels.SafelyDeserializeItems<ChannelJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.Id,
         (model, client) => TransientGuildChannel.Create(client, model) as IGuildChannel);
 
-    private IReadOnlyDictionary<Snowflake, IGuildChannel>? _channels;
-
-    public IReadOnlyDictionary<Snowflake, IPresence> Presences => _presences ??= Model.Presences.SafelyDeserializeItems<PresenceJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IPresence> Presences => field ??= Model.Presences.SafelyDeserializeItems<PresenceJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.User.Id,
         (model, client) => new TransientPresence(client, model) as IPresence);
 
-    private IReadOnlyDictionary<Snowflake, IPresence>? _presences;
-
-    public IReadOnlyDictionary<Snowflake, IStage> Stages => _stages ??= Model.StageInstances.SafelyDeserializeItems<StageInstanceJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IStage> Stages => field ??= Model.StageInstances.SafelyDeserializeItems<StageInstanceJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.Id,
         (model, client) => new TransientStage(client, model) as IStage);
 
-    private IReadOnlyDictionary<Snowflake, IStage>? _stages;
-
-    public IReadOnlyDictionary<Snowflake, IGuildEvent> GuildEvents => _guildEvents ??= Model.GuildScheduledEvents.SafelyDeserializeItems<GuildScheduledEventJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
+    public IReadOnlyDictionary<Snowflake, IGuildEvent> GuildEvents => field ??= Model.GuildScheduledEvents.SafelyDeserializeItems<GuildScheduledEventJsonModel>(Client.Logger).ToReadOnlyDictionary(Client,
         (model, _) => model.Id,
         (model, client) => new TransientGuildEvent(client, model) as IGuildEvent);
 
-    private IReadOnlyDictionary<Snowflake, IGuildEvent>? _guildEvents;
-
     GuildJsonModel ITransientEntity<GuildJsonModel>.Model => Model;
-
-    public TransientGatewayGuild(IClient client, GatewayGuildJsonModel model)
-        : base(client, model)
-    { }
 
     public override string ToString()
     {

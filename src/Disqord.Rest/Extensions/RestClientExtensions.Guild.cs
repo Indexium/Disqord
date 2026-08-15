@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -252,14 +252,14 @@ public static partial class RestClientExtensions
         return CreateThreads(client, model).Threads;
     }
 
-    public static async Task<IMember?> FetchMemberAsync(this IRestClient client,
+    public static async Task<IRestMember?> FetchMemberAsync(this IRestClient client,
         Snowflake guildId, Snowflake memberId,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         try
         {
             var model = await client.ApiClient.FetchMemberAsync(guildId, memberId, options, cancellationToken).ConfigureAwait(false);
-            return new TransientMember(client, guildId, model);
+            return new TransientRestMember(client, guildId, model);
         }
         catch (RestApiException ex) when (ex.IsError(RestApiErrorCode.UnknownMember))
         {
@@ -304,7 +304,7 @@ public static partial class RestClientExtensions
         return models.ToReadOnlyList((client, guildId), (x, state) =>
         {
             var (client, guildId) = state;
-            return new TransientMember(client, guildId, x);
+            return new TransientRestMember(client, guildId, x);
         });
     }
 
@@ -316,11 +316,11 @@ public static partial class RestClientExtensions
         return models.ToReadOnlyList((client, guildId), static (x, state) =>
         {
             var (client, guildId) = state;
-            return new TransientMember(client, guildId, x);
+            return new TransientRestMember(client, guildId, x);
         });
     }
 
-    public static async Task<IMember> AddMemberAsync(this IRestClient client,
+    public static async Task<IRestMember> AddMemberAsync(this IRestClient client,
         Snowflake guildId, Snowflake userId, BearerToken token,
         Action<AddMemberActionProperties>? action = null,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
@@ -337,25 +337,25 @@ public static partial class RestClientExtensions
         }
 
         var model = await client.ApiClient.AddMemberAsync(guildId, userId, content, options, cancellationToken).ConfigureAwait(false);
-        return new TransientMember(client, guildId, model);
+        return new TransientRestMember(client, guildId, model);
     }
 
-    public static async Task<IMember> ModifyMemberAsync(this IRestClient client,
+    public static async Task<IRestMember> ModifyMemberAsync(this IRestClient client,
         Snowflake guildId, Snowflake memberId, Action<ModifyMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         var content = action.ToContent();
         var model = await client.ApiClient.ModifyMemberAsync(guildId, memberId, content, options, cancellationToken).ConfigureAwait(false);
-        return new TransientMember(client, guildId, model);
+        return new TransientRestMember(client, guildId, model);
     }
 
-    public static async Task<IMember> ModifyCurrentMemberAsync(this IRestClient client,
+    public static async Task<IRestMember> ModifyCurrentMemberAsync(this IRestClient client,
         Snowflake guildId, Action<ModifyCurrentMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         var content = action.ToContent();
         var model = await client.ApiClient.ModifyCurrentMemberAsync(guildId, content, options, cancellationToken).ConfigureAwait(false);
-        return new TransientMember(client, guildId, model);
+        return new TransientRestMember(client, guildId, model);
     }
 
     [Obsolete("Use ModifyCurrentMemberAsync() instead.")]
