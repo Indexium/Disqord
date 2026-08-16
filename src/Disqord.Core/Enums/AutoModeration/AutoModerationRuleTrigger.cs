@@ -1,4 +1,4 @@
-namespace Disqord;
+﻿namespace Disqord;
 
 /// <summary>
 ///     Represents the types of information to be checked to trigger an auto-moderation rule.
@@ -9,11 +9,6 @@ public enum AutoModerationRuleTrigger
     ///     The trigger checks for user-defined keywords.
     /// </summary>
     Keyword = 1,
-
-    /// <summary>
-    ///     The trigger checks for harmful links.
-    /// </summary>
-    HarmfulLink = 2,
 
     /// <summary>
     ///     The trigger checks for generic spam.
@@ -28,5 +23,10 @@ public enum AutoModerationRuleTrigger
     /// <summary>
     ///     The trigger checks for mention spam.
     /// </summary>
-    MentionSpam = 5
+    MentionSpam = 5,
+
+    /// <summary>
+    ///     The trigger checks for user-defined keywords in a member's profile.
+    /// </summary>
+    MemberProfile = 6,
 }

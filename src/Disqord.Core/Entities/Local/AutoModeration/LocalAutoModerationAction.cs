@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Disqord.Models;
 using Qommon;
 
@@ -6,12 +6,22 @@ namespace Disqord;
 
 public class LocalAutoModerationAction : ILocalConstruct<LocalAutoModerationAction>, IJsonConvertible<AutoModerationActionJsonModel>
 {
-    public static LocalAutoModerationAction BlockMessage()
+    public static LocalAutoModerationAction BlockMessage(string? customMessage = null)
     {
-        return new LocalAutoModerationAction
+        var action = new LocalAutoModerationAction
         {
             Type = AutoModerationActionType.BlockMessage
         };
+
+        if (customMessage != null)
+        {
+            action.Metadata = new LocalAutoModerationActionMetadata
+            {
+                CustomMessage = customMessage,
+            };
+        }
+
+        return action;
     }
 
     public static LocalAutoModerationAction SendAlertMessage(Snowflake channelId)
@@ -35,6 +45,14 @@ public class LocalAutoModerationAction : ILocalConstruct<LocalAutoModerationActi
             {
                 TimeoutDuration = duration
             }
+        };
+    }
+
+    public static LocalAutoModerationAction BlockMemberInteraction()
+    {
+        return new LocalAutoModerationAction
+        {
+            Type = AutoModerationActionType.BlockMemberInteraction,
         };
     }
 
