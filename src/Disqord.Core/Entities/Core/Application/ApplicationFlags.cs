@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Disqord;
 
@@ -8,6 +8,11 @@ namespace Disqord;
 [Flags]
 public enum ApplicationFlags : ulong
 {
+    /// <summary>
+    ///     The application uses the Auto Moderation API.
+    /// </summary>
+    AutoModerationRuleCreateBadge = 1 << 6,
+
     /// <summary>
     ///     The bot application is verified and can receive presence information.
     /// </summary>

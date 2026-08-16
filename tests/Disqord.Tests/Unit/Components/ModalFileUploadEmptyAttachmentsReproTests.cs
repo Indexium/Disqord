@@ -360,6 +360,8 @@ public sealed class ModalFileUploadEmptyAttachmentsReproTests
 
         public bool IsEphemeral => throw new NotSupportedException();
 
+        public AttachmentFlags Flags => throw new NotSupportedException();
+
         public TimeSpan? Duration => throw new NotSupportedException();
 
         public string? WaveformBase64 => throw new NotSupportedException();

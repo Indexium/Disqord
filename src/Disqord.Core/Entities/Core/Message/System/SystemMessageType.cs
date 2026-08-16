@@ -101,5 +101,70 @@ public enum SystemMessageType
     /// <summary>
     ///     Represents a system message indicating a reminder to invite members to a guild.
     /// </summary>
-    GuildInviteReminder = 21
+    GuildInviteReminder = 21,
+
+    /// <summary>
+    ///     Represents a system message indicating a member has purchased or renewed a role subscription.
+    /// </summary>
+    RoleSubscriptionPurchase = 24,
+
+    /// <summary>
+    ///     Represents a system message prompting the purchase of a premium application subscription in response to an interaction.
+    /// </summary>
+    InteractionPremiumUpsell = 25,
+
+    /// <summary>
+    ///     Represents a system message indicating a stage has started.
+    /// </summary>
+    StageStart = 26,
+
+    /// <summary>
+    ///     Represents a system message indicating a stage has ended.
+    /// </summary>
+    StageEnd = 27,
+
+    /// <summary>
+    ///     Represents a system message indicating a member has become a speaker in a stage.
+    /// </summary>
+    StageSpeaker = 28,
+
+    /// <summary>
+    ///     Represents a system message indicating the topic of a stage has changed.
+    /// </summary>
+    StageTopic = 30,
+
+    /// <summary>
+    ///     Represents a system message indicating an application premium subscription has been purchased for a guild.
+    /// </summary>
+    GuildApplicationPremiumSubscription = 31,
+
+    /// <summary>
+    ///     Represents a system message indicating the security incident alerts of a guild have been enabled.
+    /// </summary>
+    GuildIncidentAlertModeEnabled = 35,
+
+    /// <summary>
+    ///     Represents a system message indicating the security incident alerts of a guild have been disabled.
+    /// </summary>
+    GuildIncidentAlertModeDisabled = 36,
+
+    /// <summary>
+    ///     Represents a system message indicating a raid has been reported in a guild.
+    /// </summary>
+    GuildIncidentReportRaid = 37,
+
+    /// <summary>
+    ///     Represents a system message indicating a reported raid in a guild was a false alarm.
+    /// </summary>
+    GuildIncidentReportFalseAlarm = 38,
+
+    /// <summary>
+    ///     Represents a system message indicating a purchase notification.
+    /// </summary>
+    PurchaseNotification = 43,
+
+    /// <summary>
+    ///     Represents a system message containing the results of a poll.
+    /// </summary>
+    PollResult = 45,
 }

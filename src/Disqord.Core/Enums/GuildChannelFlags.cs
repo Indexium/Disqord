@@ -27,5 +27,10 @@ public enum GuildChannelFlags
     ///     The metadata of the channel has been obfuscated because the current user cannot view it.
     /// </summary>
     /// <seealso href="https://discord.com/developers/docs/resources/channel#channel-object-obfuscated-channels"> Discord documentation </seealso>
-    Obfuscated = 1 << 17
+    Obfuscated = 1 << 17,
+
+    /// <summary>
+    ///     The channel is marked as a spoiler.
+    /// </summary>
+    Spoiler = 1 << 21,
 }

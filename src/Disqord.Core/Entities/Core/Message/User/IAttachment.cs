@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Disqord;
 
@@ -58,6 +58,11 @@ public interface IAttachment : IIdentifiableEntity
     ///     Gets whether this attachment is ephemeral, i.e. whether it is within an ephemeral message.
     /// </summary>
     bool IsEphemeral { get; }
+
+    /// <summary>
+    ///     Gets the flags of this attachment.
+    /// </summary>
+    AttachmentFlags Flags { get; }
 
     /// <summary>
     ///     Gets the duration of this attachment.
