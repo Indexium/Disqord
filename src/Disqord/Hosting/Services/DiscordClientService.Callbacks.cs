@@ -57,6 +57,10 @@ public abstract partial class DiscordClientService
     protected internal virtual ValueTask OnThreadsSynchronized(ThreadsSynchronizedEventArgs e)
         => default;
 
+    /// <inheritdoc cref="IGatewayClient.CurrentThreadMemberUpdated"/>
+    protected internal virtual ValueTask OnCurrentThreadMemberUpdated(CurrentThreadMemberUpdatedEventArgs e)
+        => default;
+
     /// <inheritdoc cref="IGatewayClient.ThreadMembersUpdated"/>
     protected internal virtual ValueTask OnThreadMembersUpdated(ThreadMembersUpdatedEventArgs e)
         => default;

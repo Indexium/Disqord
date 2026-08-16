@@ -30,6 +30,8 @@ public partial interface IGatewayDispatcher
 
     AsynchronousEvent<ThreadsSynchronizedEventArgs> ThreadsSynchronizedEvent { get; }
 
+    AsynchronousEvent<CurrentThreadMemberUpdatedEventArgs> CurrentThreadMemberUpdatedEvent { get; }
+
     AsynchronousEvent<ThreadMembersUpdatedEventArgs> ThreadMembersUpdatedEvent { get; }
 
     AsynchronousEvent<ChannelPinsUpdatedEventArgs> ChannelPinsUpdatedEvent { get; }

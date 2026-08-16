@@ -35,6 +35,8 @@ public partial class DiscordClientMasterService
 
     public DiscordClientService[] ThreadsSynchronizedServices { get; }
 
+    public DiscordClientService[] CurrentThreadMemberUpdatedServices { get; }
+
     public DiscordClientService[] ThreadMembersUpdatedServices { get; }
 
     public DiscordClientService[] ChannelPinsUpdatedServices { get; }
@@ -164,6 +166,7 @@ public partial class DiscordClientMasterService
         ThreadUpdatedServices = GetServices<ThreadUpdatedEventArgs>(servicesArray, nameof(DiscordClientService.OnThreadUpdated));
         ThreadDeletedServices = GetServices<ThreadDeletedEventArgs>(servicesArray, nameof(DiscordClientService.OnThreadDeleted));
         ThreadsSynchronizedServices = GetServices<ThreadsSynchronizedEventArgs>(servicesArray, nameof(DiscordClientService.OnThreadsSynchronized));
+        CurrentThreadMemberUpdatedServices = GetServices<CurrentThreadMemberUpdatedEventArgs>(servicesArray, nameof(DiscordClientService.OnCurrentThreadMemberUpdated));
         ThreadMembersUpdatedServices = GetServices<ThreadMembersUpdatedEventArgs>(servicesArray, nameof(DiscordClientService.OnThreadMembersUpdated));
         ChannelPinsUpdatedServices = GetServices<ChannelPinsUpdatedEventArgs>(servicesArray, nameof(DiscordClientService.OnChannelPinsUpdated));
         EntitlementCreatedServices = GetServices<EntitlementCreatedEventArgs>(servicesArray, nameof(DiscordClientService.OnEntitlementCreated));
@@ -229,6 +232,7 @@ public partial class DiscordClientMasterService
         Client.ThreadUpdated += HandleThreadUpdated;
         Client.ThreadDeleted += HandleThreadDeleted;
         Client.ThreadsSynchronized += HandleThreadsSynchronized;
+        Client.CurrentThreadMemberUpdated += HandleCurrentThreadMemberUpdated;
         Client.ThreadMembersUpdated += HandleThreadMembersUpdated;
         Client.ChannelPinsUpdated += HandleChannelPinsUpdated;
         Client.EntitlementCreated += HandleEntitlementCreated;
@@ -358,6 +362,12 @@ public partial class DiscordClientMasterService
     {
         foreach (var service in ThreadsSynchronizedServices)
             await ExecuteAsync((service, e) => service.OnThreadsSynchronized(e), service, e).ConfigureAwait(false);
+    }
+
+    public async Task HandleCurrentThreadMemberUpdated(object? sender, CurrentThreadMemberUpdatedEventArgs e)
+    {
+        foreach (var service in CurrentThreadMemberUpdatedServices)
+            await ExecuteAsync((service, e) => service.OnCurrentThreadMemberUpdated(e), service, e).ConfigureAwait(false);
     }
 
     public async Task HandleThreadMembersUpdated(object? sender, ThreadMembersUpdatedEventArgs e)

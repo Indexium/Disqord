@@ -1,4 +1,4 @@
-namespace Disqord.Gateway;
+﻿namespace Disqord.Gateway;
 
 /// <summary>
 ///     Defines the names of known gateway dispatches.
@@ -74,6 +74,11 @@ public static class GatewayDispatchNames
     ///     The <c>THREAD_LIST_SYNC</c> dispatch.
     /// </summary>
     public const string ThreadListSync = "THREAD_LIST_SYNC";
+
+    /// <summary>
+    ///     The <c>THREAD_MEMBER_UPDATE</c> dispatch.
+    /// </summary>
+    public const string ThreadMemberUpdate = "THREAD_MEMBER_UPDATE";
 
     /// <summary>
     ///     The <c>THREAD_MEMBERS_UPDATE</c> dispatch.

@@ -1,4 +1,4 @@
-using Qommon.Events;
+﻿using Qommon.Events;
 
 namespace Disqord.Gateway.Default;
 
@@ -93,6 +93,13 @@ public partial class DefaultGatewayClient
     {
         add => Dispatcher.ThreadsSynchronizedEvent.Add(value);
         remove => Dispatcher.ThreadsSynchronizedEvent.Remove(value);
+    }
+
+    /// <inheritdoc/>
+    public event AsynchronousEventHandler<CurrentThreadMemberUpdatedEventArgs> CurrentThreadMemberUpdated
+    {
+        add => Dispatcher.CurrentThreadMemberUpdatedEvent.Add(value);
+        remove => Dispatcher.CurrentThreadMemberUpdatedEvent.Remove(value);
     }
 
     /// <inheritdoc/>

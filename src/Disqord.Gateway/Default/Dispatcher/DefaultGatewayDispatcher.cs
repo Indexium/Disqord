@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -120,6 +120,7 @@ public partial class DefaultGatewayDispatcher : IGatewayDispatcher
             [GatewayDispatchNames.ThreadUpdate] = new ThreadUpdateDispatchHandler(),
             [GatewayDispatchNames.ThreadDelete] = new ThreadDeleteDispatchHandler(),
             [GatewayDispatchNames.ThreadListSync] = new ThreadListSyncDispatchHandler(),
+            [GatewayDispatchNames.ThreadMemberUpdate] = new ThreadMemberUpdateDispatchHandler(),
             [GatewayDispatchNames.ThreadMembersUpdate] = new ThreadMembersUpdateDispatchHandler(),
 
             [GatewayDispatchNames.ChannelPinsUpdate] = new ChannelPinsUpdateDispatchHandler(),
