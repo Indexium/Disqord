@@ -505,18 +505,17 @@ public class AudioPlayer : IAsyncDisposable
         }
         finally
         {
-            try
+            if (exception is not VoiceConnectionException)
             {
-                if (exception is not VoiceConnectionException)
+                try
                 {
                     await connection.SetSpeakingFlagsAsync(SpeakingFlags.None, default).ConfigureAwait(false);
                 }
+                catch { }
             }
-            finally
-            {
-                Stop();
-                await OnStopped(exception).ConfigureAwait(false);
-            }
+
+            Stop();
+            await OnStopped(exception).ConfigureAwait(false);
         }
     }
 

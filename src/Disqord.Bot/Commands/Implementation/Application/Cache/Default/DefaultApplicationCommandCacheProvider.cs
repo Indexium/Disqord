@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Threading;
@@ -65,7 +65,7 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
         CacheJsonModel? model;
         try
         {
-            var fileStream = new FileStream(FilePath, FileMode.Open);
+            var fileStream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
 
             try
             {
@@ -112,36 +112,37 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
         memoryStream.SetLength(memoryStream.Position);
         memoryStream.Position = 0;
 
-        if (cache.CacheFileExists)
+        var createdTemporaryFile = false;
+        try
         {
-            var createdTemporaryFile = false;
+            FileStream fileStream;
             try
             {
-                FileStream fileStream;
-                try
-                {
-                    fileStream = new FileStream(TemporaryFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                    createdTemporaryFile = true;
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Failed to create the temporary file '{TemporaryFilePath}'", ex);
-                }
+                fileStream = new FileStream(TemporaryFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                createdTemporaryFile = true;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to create the temporary file '{TemporaryFilePath}'", ex);
+            }
 
-                try
-                {
-                    await cache.MemoryStream.CopyToAsync(fileStream).ConfigureAwait(false);
-                    await fileStream.FlushAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Failed to write to the temporary file '{TemporaryFilePath}'.", ex);
-                }
-                finally
-                {
-                    await fileStream.DisposeAsync().ConfigureAwait(false);
-                }
+            try
+            {
+                await cache.MemoryStream.CopyToAsync(fileStream).ConfigureAwait(false);
+                await fileStream.FlushAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to write to the temporary file '{TemporaryFilePath}'.", ex);
+            }
+            finally
+            {
+                await fileStream.DisposeAsync().ConfigureAwait(false);
+            }
 
+            if (cache.CacheFileExists)
+            {
+                var replaced = false;
                 for (var i = 0; i < 5; i++)
                 {
                     if (i > 0)
@@ -152,6 +153,7 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
                         var backupFilePath = BackupFilePath;
                         File.Replace(TemporaryFilePath, FilePath, backupFilePath);
                         createdTemporaryFile = false;
+                        replaced = true;
                         try
                         {
                             File.Delete(backupFilePath);
@@ -167,46 +169,37 @@ public partial class DefaultApplicationCommandCacheProvider : IApplicationComman
                         throw new InvalidOperationException($"An exception occurred while replacing the cache file '{FilePath}' with '{TemporaryFilePath}'.", ex);
                     }
                 }
-            }
-            finally
-            {
-                if (createdTemporaryFile)
+
+                if (!replaced)
                 {
-                    try
-                    {
-                        File.Delete(TemporaryFilePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogWarning(ex, "An exception occurred while deleting the temporary file '{0}'.", TemporaryFilePath);
-                    }
+                    throw new InvalidOperationException($"Failed to replace the cache file '{FilePath}' with '{TemporaryFilePath}' after 5 attempts.");
+                }
+            }
+            else
+            {
+                try
+                {
+                    File.Move(TemporaryFilePath, FilePath);
+                    createdTemporaryFile = false;
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"An exception occurred while moving the temporary file '{TemporaryFilePath}' to '{FilePath}'.", ex);
                 }
             }
         }
-        else
+        finally
         {
-            FileStream fileStream;
-            try
+            if (createdTemporaryFile)
             {
-                fileStream = new FileStream(FilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Failed to create the cache file '{FilePath}'.", ex);
-            }
-
-            try
-            {
-                await cache.MemoryStream.CopyToAsync(fileStream).ConfigureAwait(false);
-                await fileStream.FlushAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Failed to write to the temporary file '{TemporaryFilePath}'.", ex);
-            }
-            finally
-            {
-                await fileStream.DisposeAsync().ConfigureAwait(false);
+                try
+                {
+                    File.Delete(TemporaryFilePath);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "An exception occurred while deleting the temporary file '{0}'.", TemporaryFilePath);
+                }
             }
         }
     }

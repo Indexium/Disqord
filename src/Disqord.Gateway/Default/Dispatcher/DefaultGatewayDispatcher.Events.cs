@@ -30,6 +30,8 @@ public partial class DefaultGatewayDispatcher
 
     public AsynchronousEvent<ThreadsSynchronizedEventArgs> ThreadsSynchronizedEvent { get; } = new();
 
+    public AsynchronousEvent<CurrentThreadMemberUpdatedEventArgs> CurrentThreadMemberUpdatedEvent { get; } = new();
+
     public AsynchronousEvent<ThreadMembersUpdatedEventArgs> ThreadMembersUpdatedEvent { get; } = new();
 
     public AsynchronousEvent<ChannelPinsUpdatedEventArgs> ChannelPinsUpdatedEvent { get; } = new();

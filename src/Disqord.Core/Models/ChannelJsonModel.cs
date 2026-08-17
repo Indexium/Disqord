@@ -52,7 +52,10 @@ public class ChannelJsonModel : JsonModel
     public Optional<Snowflake> OwnerId;
 
     [JsonProperty("application_id")]
-    public Optional<Snowflake> ApplicationId;
+    public Optional<Snowflake?> ApplicationId;
+
+    [JsonProperty("managed")]
+    public Optional<bool> Managed;
 
     [JsonProperty("parent_id")]
     public Optional<Snowflake?> ParentId;
@@ -87,8 +90,14 @@ public class ChannelJsonModel : JsonModel
     [JsonProperty("permissions")]
     public Optional<Permissions> Permissions;
 
+    [JsonProperty("app_permissions")]
+    public Optional<Permissions> AppPermissions;
+
     [JsonProperty("flags")]
     public Optional<GuildChannelFlags> Flags;
+
+    [JsonProperty("total_message_sent")]
+    public Optional<int> TotalMessageSent;
 
     [JsonProperty("available_tags")]
     public Optional<ForumTagJsonModel[]> AvailableTags;

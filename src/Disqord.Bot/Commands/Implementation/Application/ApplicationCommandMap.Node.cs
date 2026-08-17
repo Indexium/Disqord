@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Qommon;
 using Qommon.Collections.ThreadSafe;
 
@@ -8,12 +8,12 @@ public partial class ApplicationCommandMap
 {
     public class TopLevelNode : Node
     {
-        public IThreadSafeDictionary<string, ApplicationCommand> ContextMenuCommands { get; }
+        public IThreadSafeDictionary<(string Name, ApplicationCommandType Type), ApplicationCommand> ContextMenuCommands { get; }
 
         public TopLevelNode(ApplicationCommandMap map)
             : base(map)
         {
-            ContextMenuCommands = ThreadSafeDictionary.ConcurrentDictionary.Create<string, ApplicationCommand>();
+            ContextMenuCommands = ThreadSafeDictionary.ConcurrentDictionary.Create<(string, ApplicationCommandType), ApplicationCommand>();
         }
 
         public ApplicationCommand? FindSlashCommand(IReadOnlyList<string> aliases)
@@ -36,7 +36,12 @@ public partial class ApplicationCommandMap
                         Command = command
                     };
 
-                ContextMenuCommands.Add(aliases[0], command);
+                if (!ContextMenuCommands.TryAdd((aliases[0], command.Type), command))
+                    throw new ApplicationCommandMappingException($"Duplicate context menu command alias '{aliases[0]}' encountered for {command.Type} commands.")
+                    {
+                        Command = command
+                    };
+
                 return;
             }
 
@@ -63,7 +68,7 @@ public partial class ApplicationCommandMap
                         Command = command
                     };
 
-                ContextMenuCommands.Remove(aliases[0]);
+                ContextMenuCommands.Remove((aliases[0], command.Type));
                 return;
             }
 

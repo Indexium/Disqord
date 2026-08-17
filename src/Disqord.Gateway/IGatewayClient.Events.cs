@@ -82,6 +82,11 @@ public partial interface IGatewayClient
     event AsynchronousEventHandler<ThreadsSynchronizedEventArgs> ThreadsSynchronized;
 
     /// <summary>
+    ///     Fires when the current user's thread member is updated.
+    /// </summary>
+    event AsynchronousEventHandler<CurrentThreadMemberUpdatedEventArgs> CurrentThreadMemberUpdated;
+
+    /// <summary>
     ///     Fires when members are added and/or removed from a thread.
     /// </summary>
     /// <remarks>

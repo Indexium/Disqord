@@ -37,6 +37,9 @@ public class TransientAttachment : TransientEntity<AttachmentJsonModel>, IAttach
     public bool IsEphemeral => Model.Ephemeral.GetValueOrDefault();
 
     /// <inheritdoc/>
+    public AttachmentFlags Flags => Model.Flags.GetValueOrDefault();
+
+    /// <inheritdoc/>
     public TimeSpan? Duration
     {
         get

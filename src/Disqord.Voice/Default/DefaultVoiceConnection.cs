@@ -174,45 +174,25 @@ public class DefaultVoiceConnection : IVoiceConnectionHost
 
     public async ValueTask SetSpeakingFlagsAsync(SpeakingFlags flags, CancellationToken cancellationToken = default)
     {
-        var success = false;
-        do
+        try
         {
-            try
+            await Gateway.SendAsync(new VoiceGatewayPayloadJsonModel
             {
-                await Gateway.SendAsync(new VoiceGatewayPayloadJsonModel
+                Op = VoiceGatewayPayloadOperation.Speaking,
+                D = new SpeakingJsonModel
                 {
-                    Op = VoiceGatewayPayloadOperation.Speaking,
-                    D = new SpeakingJsonModel
-                    {
-                        Delay = 0,
-                        Speaking = flags,
-                        Ssrc = Udp.Ssrc
-                    }
-                }, cancellationToken).ConfigureAwait(false);
-
-                _lastSpeakingFlags = (int) flags;
-                success = true;
-            }
-            catch (OperationCanceledException ex) when (ex.CancellationToken == cancellationToken)
-            {
-                throw;
-            }
-            catch (ObjectDisposedException)
-            {
-                // The connection is shutting down; sending Speaking is best-effort.
-                return;
-            }
-            catch (Exception ex)
-            {
-                if (ex is VoiceConnectionException)
-                {
-                    throw;
+                    Delay = 0,
+                    Speaking = flags,
+                    Ssrc = Udp.Ssrc
                 }
+            }, cancellationToken).ConfigureAwait(false);
 
-                await WaitUntilReadyAsync(cancellationToken).ConfigureAwait(false);
-            }
+            _lastSpeakingFlags = (int) flags;
         }
-        while (!success);
+        catch (ObjectDisposedException)
+        {
+            // The connection is shutting down; sending Speaking is best-effort.
+        }
     }
 
     public ValueTask SendPacketAsync(ReadOnlyMemory<byte> opus, CancellationToken cancellationToken = default)

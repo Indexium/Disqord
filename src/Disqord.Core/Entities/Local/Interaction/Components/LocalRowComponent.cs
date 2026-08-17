@@ -21,6 +21,7 @@ public class LocalRowComponent : LocalComponent, ILocalComponentContainer, ILoca
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalRowComponent(LocalRowComponent other)
+        : base(other)
     {
         Components = other.Components.DeepClone();
     }

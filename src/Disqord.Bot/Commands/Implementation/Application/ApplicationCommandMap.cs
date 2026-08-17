@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Qmmands;
@@ -32,7 +32,7 @@ public partial class ApplicationCommandMap : ICommandMap
             if (!TryGetTopLevelNode(commandGuildId, out var node))
                 return null;
 
-            return node.ContextMenuCommands.GetValueOrDefault(contextMenuInteraction.CommandName);
+            return node.ContextMenuCommands.GetValueOrDefault((contextMenuInteraction.CommandName, contextMenuInteraction.CommandType));
         }
 
         if (interaction is ISlashCommandInteraction or IAutoCompleteInteraction)
@@ -235,7 +235,7 @@ public partial class ApplicationCommandMap : ICommandMap
 
         foreach (var submodule in module.Submodules)
         {
-            if (TryGetGuildIds(module.Checks, out var guildIds))
+            if (TryGetGuildIds(submodule.Checks, out var guildIds))
             {
                 foreach (var guildId in guildIds)
                 {

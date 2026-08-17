@@ -1,4 +1,5 @@
-﻿using Disqord.Models;
+﻿using System;
+using Disqord.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Disqord.AuditLogs;
@@ -28,6 +29,12 @@ public class TransientGuildEventAuditLogChanges : IGuildEventAuditLogChanges
 
     /// <inheritdoc/>
     public AuditLogChange<GuildEventStatus> Status { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<DateTimeOffset> StartsAt { get; }
+
+    /// <inheritdoc/>
+    public AuditLogChange<DateTimeOffset?> EndsAt { get; }
 
     public TransientGuildEventAuditLogChanges(IClient client, AuditLogEntryJsonModel model)
     {
@@ -74,6 +81,16 @@ public class TransientGuildEventAuditLogChanges : IGuildEventAuditLogChanges
                 case "status":
                 {
                     Status = AuditLogChange<GuildEventStatus>.Convert(change);
+                    break;
+                }
+                case "scheduled_start_time":
+                {
+                    StartsAt = AuditLogChange<DateTimeOffset>.Convert(change);
+                    break;
+                }
+                case "scheduled_end_time":
+                {
+                    EndsAt = AuditLogChange<DateTimeOffset?>.Convert(change);
                     break;
                 }
                 default:

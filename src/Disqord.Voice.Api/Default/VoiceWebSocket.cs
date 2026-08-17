@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Disqord.Utilities.Threading;
 using Disqord.WebSocket;
 using Microsoft.Extensions.Logging;
-using Qommon;
 using Qommon.Threading;
 
 namespace Disqord.Voice.Api.Default;
@@ -18,16 +17,7 @@ internal sealed class VoiceWebSocket(
 
     public ILogger Logger { get; } = logger;
 
-    private IWebSocketClient? _ws;
-
-    /// <summary>
-    ///     This is a fix for the ClientWebSocket being garbage and aborting itself on a cancelled ReceiveAsync (and possibly SendAsync)
-    ///     rendering us unable to close the connection gracefully.
-    ///     1. We create an infinite task that runs alongside the Send/ReceiveAsync() tasks and pass it the actual cancellation token just to signal cancellation.
-    ///     2. We pass the Send/ReceiveAsync() task an essentially bogus cancellation token that gets cancelled when we close the connection,
-    ///        allowing us to gracefully close and then have the websocket abort or whatever as we don't care about the state of it anymore.
-    /// </summary>
-    private Cts? _limboCts;
+    private Connection? _connection;
 
     private readonly SemaphoreSlim _sendSemaphore = new(1, 1);
 
@@ -40,7 +30,20 @@ internal sealed class VoiceWebSocket(
     private void ThrowIfDisposed()
     {
         if (_isDisposed)
+        {
             throw new ObjectDisposedException(null, "The voice web socket client has been disposed.");
+        }
+    }
+
+    private Connection GetConnection()
+    {
+        var connection = _connection;
+        if (connection == null)
+        {
+            throw new WebSocketClosedException(null, "The web socket is not connected.");
+        }
+
+        return connection;
     }
 
     public async ValueTask ConnectAsync(Uri url, CancellationToken cancellationToken)
@@ -50,13 +53,21 @@ internal sealed class VoiceWebSocket(
         {
             ThrowIfDisposed();
 
-            _limboCts?.Cancel();
-            _limboCts?.Dispose();
-            _limboCts = new Cts();
-            _ws?.Dispose();
-            _ws = webSocketClientFactory.CreateClient();
+            _connection?.Dispose();
+            _connection = null;
 
-            await _ws.ConnectAsync(url, cancellationToken).ConfigureAwait(false);
+            var connection = new Connection(webSocketClientFactory.CreateClient());
+            try
+            {
+                await connection.WebSocket.ConnectAsync(url, cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                connection.Dispose();
+                throw;
+            }
+
+            _connection = connection;
         }
     }
 
@@ -66,8 +77,11 @@ internal sealed class VoiceWebSocket(
         {
             ThrowIfDisposed();
 
-            // See _limboCts for more info on cancellation.
-            var sendTask = _ws!.SendAsync(memory, messageType, true, _limboCts!.Token).AsTask();
+            var connection = GetConnection();
+            var webSocket = connection.WebSocket;
+
+            // See Connection.LimboCts for more info on cancellation.
+            var sendTask = webSocket.SendAsync(memory, messageType, true, connection.LimboCts.Token).AsTask();
             using (var infiniteCts = Cts.Linked(cancellationToken))
             {
                 var infiniteTask = Task.Delay(Timeout.Infinite, infiniteCts.Token);
@@ -75,7 +89,19 @@ internal sealed class VoiceWebSocket(
                 infiniteCts.Cancel();
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                throw new OperationCanceledException(cancellationToken);
+            }
+
+            try
+            {
+                await sendTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException ex)
+            {
+                throw new WebSocketClosedException(webSocket.CloseStatus, webSocket.CloseMessage, ex);
+            }
         }
     }
 
@@ -85,15 +111,15 @@ internal sealed class VoiceWebSocket(
         {
             ThrowIfDisposed();
 
-            Guard.IsNotNull(_ws);
-            Guard.IsNotNull(_limboCts);
+            var connection = GetConnection();
+            var webSocket = connection.WebSocket;
 
             _receiveStream.Position = 0;
             _receiveStream.SetLength(0);
             do
             {
-                // See _limboCts for more info on cancellation.
-                var receiveTask = _ws.ReceiveAsync(_receiveBuffer, _limboCts.Token).AsTask();
+                // See Connection.LimboCts for more info on cancellation.
+                var receiveTask = webSocket.ReceiveAsync(_receiveBuffer, connection.LimboCts.Token).AsTask();
                 using (var infiniteCts = Cts.Linked(cancellationToken))
                 {
                     var infiniteTask = Task.Delay(Timeout.Infinite, infiniteCts.Token);
@@ -101,17 +127,25 @@ internal sealed class VoiceWebSocket(
                     infiniteCts.Cancel();
                 }
 
-                if (cancellationToken.IsCancellationRequested)
-                    throw new OperationCanceledException(cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
 
-                var result = await receiveTask.ConfigureAwait(false);
+                WebSocketResult result;
+                try
+                {
+                    result = await receiveTask.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException ex)
+                {
+                    throw new WebSocketClosedException(webSocket.CloseStatus, webSocket.CloseMessage, ex);
+                }
+
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    var closeStatus = _ws.CloseStatus;
-                    var closeMessage = _ws.CloseMessage;
+                    var closeStatus = webSocket.CloseStatus;
+                    var closeMessage = webSocket.CloseMessage;
                     try
                     {
-                        await _ws.CloseOutputAsync(closeStatus.GetValueOrDefault(), closeMessage, default).ConfigureAwait(false);
+                        await webSocket.CloseOutputAsync(closeStatus.GetValueOrDefault(), closeMessage, default).ConfigureAwait(false);
                     }
                     catch { }
 
@@ -138,17 +172,23 @@ internal sealed class VoiceWebSocket(
         using (await _sendSemaphore.EnterAsync(cancellationToken).ConfigureAwait(false))
         using (await _receiveSemaphore.EnterAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (_ws!.State != WebSocketState.Aborted)
+            var connection = _connection;
+            if (connection == null)
+            {
+                return;
+            }
+
+            _connection = null;
+            if (connection.WebSocket.State != WebSocketState.Aborted)
             {
                 try
                 {
-                    await _ws.CloseAsync(closeStatus, closeMessage, cancellationToken).ConfigureAwait(false);
+                    await connection.WebSocket.CloseAsync(closeStatus, closeMessage, cancellationToken).ConfigureAwait(false);
                 }
                 catch { }
             }
 
-            _limboCts?.Cancel();
-            _limboCts?.Dispose();
+            connection.Dispose();
         }
     }
 
@@ -165,7 +205,35 @@ internal sealed class VoiceWebSocket(
 
             _isDisposed = true;
             _receiveStream.Dispose();
-            _ws?.Dispose();
+            _connection?.Dispose();
+            _connection = null;
+        }
+    }
+
+    private sealed class Connection : IDisposable
+    {
+        public IWebSocketClient WebSocket { get; }
+
+        /// <summary>
+        ///     This is a fix for the ClientWebSocket being garbage and aborting itself on a cancelled ReceiveAsync (and possibly SendAsync)
+        ///     rendering us unable to close the connection gracefully.
+        ///     1. We create an infinite task that runs alongside the Send/ReceiveAsync() tasks and pass it the actual cancellation token just to signal cancellation.
+        ///     2. We pass the Send/ReceiveAsync() task an essentially bogus cancellation token that gets cancelled when we close the connection,
+        ///        allowing us to gracefully close and then have the websocket abort or whatever as we don't care about the state of it anymore.
+        /// </summary>
+        public Cts LimboCts { get; }
+
+        public Connection(IWebSocketClient webSocket)
+        {
+            WebSocket = webSocket;
+            LimboCts = new Cts();
+        }
+
+        public void Dispose()
+        {
+            LimboCts.Cancel();
+            LimboCts.Dispose();
+            WebSocket.Dispose();
         }
     }
 }

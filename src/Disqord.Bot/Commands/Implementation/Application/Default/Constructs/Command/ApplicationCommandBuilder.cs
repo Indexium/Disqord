@@ -54,13 +54,17 @@ public class ApplicationCommandBuilder : ICommandBuilder
 
         if (Type == ApplicationCommandType.User)
         {
-            if (_parameters.Count != 1 && !typeof(IUser).IsAssignableFrom(_parameters[0].ReflectedType))
+            if (_parameters.Count != 1 || !typeof(IUser).IsAssignableFrom(_parameters[0].ReflectedType))
+            {
                 Throw.InvalidOperationException("User commands must take a single user or member parameter.");
+            }
         }
         else if (Type == ApplicationCommandType.Message)
         {
-            if (_parameters.Count != 1 && !typeof(IMessage).IsAssignableFrom(_parameters[0].ReflectedType))
-                Throw.InvalidOperationException("User commands must take a single message parameter.");
+            if (_parameters.Count != 1 || !typeof(IMessage).IsAssignableFrom(_parameters[0].ReflectedType))
+            {
+                Throw.InvalidOperationException("Message commands must take a single message parameter.");
+            }
         }
 
         return new ApplicationCommand(module, this);

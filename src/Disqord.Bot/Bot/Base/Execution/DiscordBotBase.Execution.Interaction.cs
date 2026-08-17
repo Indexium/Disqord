@@ -10,6 +10,17 @@ public abstract partial class DiscordBotBase
 {
     internal async ValueTask<bool> ProcessCommandsAsync(InteractionReceivedEventArgs e)
     {
+        try
+        {
+            if (!await OnInteraction(e.Interaction).ConfigureAwait(false))
+                return false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "An exception occurred while executing the check interaction callback.");
+            return false;
+        }
+
         if (e.Interaction is not IApplicationCommandInteraction and not IComponentInteraction and not IModalSubmitInteraction)
             return false;
 

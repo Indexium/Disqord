@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disqord.Logging;
@@ -70,7 +71,11 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
             throw new InvalidOperationException($"Failed to create the directory for localizations '{directoryPath}'.", ex);
         }
 
-        var fileWildcard = string.Format(CultureInfo.InvariantCulture, LocaleFileNameFormat, "*");
+        var fileNameFormat = LocaleFileNameFormat;
+        var placeholderIndex = fileNameFormat.IndexOf("{0}", StringComparison.Ordinal);
+        var fileNamePrefix = fileNameFormat[..placeholderIndex];
+        var fileNameSuffix = fileNameFormat[(placeholderIndex + 3)..];
+        var fileWildcard = string.Format(CultureInfo.InvariantCulture, fileNameFormat, "*");
         List<(string LocaleName, string LocaleFilePath)> existingLocales;
         var localeNames = Discord.LocaleNames.GetArray();
         try
@@ -79,7 +84,13 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
             existingLocales = new List<(string, string)>();
             foreach (var existingLocaleFilePath in Directory.EnumerateFiles(directoryPath, fileWildcard))
             {
-                var localeName = Path.GetFileNameWithoutExtension(existingLocaleFilePath);
+                var fileName = Path.GetFileName(existingLocaleFilePath);
+                if (fileName.Length <= fileNamePrefix.Length + fileNameSuffix.Length
+                    || !fileName.StartsWith(fileNamePrefix, StringComparison.Ordinal)
+                    || !fileName.EndsWith(fileNameSuffix, StringComparison.Ordinal))
+                    continue;
+
+                var localeName = fileName[fileNamePrefix.Length..^fileNameSuffix.Length];
                 if (Array.IndexOf(localeNames, localeName) == -1)
                     continue;
 
@@ -151,7 +162,7 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
         await continuation.ConfigureAwait(false);
         if (resultsTask.Exception != null)
         {
-            throw resultsTask.Exception!;
+            ExceptionDispatchInfo.Capture(resultsTask.Exception).Throw();
         }
 
         foreach (var storeInformation in resultsTask.Result)
@@ -196,33 +207,34 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
                     var localeFilePath = storeInformation.LocaleFilePath;
                     try
                     {
+                        FileStream fileStream;
+                        try
+                        {
+                            fileStream = new FileStream(temporaryFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                            createdTemporaryFile = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException($"Failed to create the temporary file '{temporaryFilePath}'", ex);
+                        }
+
+                        try
+                        {
+                            await memoryStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                            await fileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException($"Failed to write to the temporary file '{temporaryFilePath}'.", ex);
+                        }
+                        finally
+                        {
+                            await fileStream.DisposeAsync().ConfigureAwait(false);
+                        }
+
                         if (localeFileExists)
                         {
-                            FileStream fileStream;
-                            try
-                            {
-                                fileStream = new FileStream(temporaryFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                                createdTemporaryFile = true;
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidOperationException($"Failed to create the temporary file '{temporaryFilePath}'", ex);
-                            }
-
-                            try
-                            {
-                                await memoryStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                                await fileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidOperationException($"Failed to write to the temporary file '{temporaryFilePath}'.", ex);
-                            }
-                            finally
-                            {
-                                await fileStream.DisposeAsync().ConfigureAwait(false);
-                            }
-
+                            var replaced = false;
                             var backupFilePath = Path.Join(@this.DirectoryPath, string.Format(CultureInfo.InvariantCulture, @this.BackupFileNameFormat, storeInformation.Locale.Name));
                             for (var i = 0; i < 5; i++)
                             {
@@ -233,6 +245,7 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
                                 {
                                     File.Replace(temporaryFilePath, localeFilePath, backupFilePath);
                                     createdTemporaryFile = false;
+                                    replaced = true;
                                     try
                                     {
                                         File.Delete(backupFilePath);
@@ -253,31 +266,22 @@ public partial class DefaultApplicationCommandLocalizer : IApplicationCommandLoc
                                     throw new InvalidOperationException($"An exception occurred while replacing the localization file '{localeFilePath}' with '{temporaryFilePath}'.", ex);
                                 }
                             }
+
+                            if (!replaced)
+                            {
+                                throw new InvalidOperationException($"Failed to replace the localization file '{localeFilePath}' with '{temporaryFilePath}' after 5 attempts.");
+                            }
                         }
                         else
                         {
-                            FileStream fileStream;
                             try
                             {
-                                fileStream = new FileStream(localeFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                                File.Move(temporaryFilePath, localeFilePath);
+                                createdTemporaryFile = false;
                             }
                             catch (Exception ex)
                             {
-                                throw new InvalidOperationException($"Failed to create the missing localization file '{localeFilePath}'.", ex);
-                            }
-
-                            try
-                            {
-                                await memoryStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                                await fileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidOperationException($"Failed to write to the temporary file '{temporaryFilePath}'.", ex);
-                            }
-                            finally
-                            {
-                                await fileStream.DisposeAsync().ConfigureAwait(false);
+                                throw new InvalidOperationException($"An exception occurred while moving the temporary file '{temporaryFilePath}' to '{localeFilePath}'.", ex);
                             }
                         }
                     }

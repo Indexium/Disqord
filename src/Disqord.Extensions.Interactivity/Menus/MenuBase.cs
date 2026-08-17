@@ -144,6 +144,7 @@ public abstract class MenuBase : IAsyncDisposable
 
     private bool _isDisposed;
     private readonly object _disposeLock = new();
+    private readonly SemaphoreSlim _interactionLock = new(1, 1);
 
     /// <summary>
     ///     Instantiates a new <see cref="MenuBase"/>.
@@ -355,6 +356,7 @@ public abstract class MenuBase : IAsyncDisposable
             return;
         }
 
+        await _interactionLock.WaitAsync().ConfigureAwait(false);
         try
         {
             await HandleInteractionAsync(e).ConfigureAwait(false);
@@ -362,6 +364,10 @@ public abstract class MenuBase : IAsyncDisposable
         catch (Exception ex)
         {
             Interactivity.Logger.LogError(ex, "An exception occurred while handling interaction for menu {0}.", GetType());
+        }
+        finally
+        {
+            _interactionLock.Release();
         }
     }
 
@@ -452,6 +458,7 @@ public abstract class MenuBase : IAsyncDisposable
             _cts = null;
             _timeoutTimer?.Dispose();
             _timeoutTimer = null;
+            _interactionLock.Dispose();
         }
 
         var view = _view;

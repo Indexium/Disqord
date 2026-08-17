@@ -1,4 +1,4 @@
-using Qmmands;
+﻿using Qmmands;
 using Qommon;
 
 namespace Disqord.Bot.Commands.Application;
@@ -11,7 +11,7 @@ public abstract class ApplicationCommandAttribute : CommandAttribute
     /// <summary>
     ///     Gets the alias of the command.
     /// </summary>
-    public string Alias { get; }
+    public string Alias { get; internal set; }
 
     /// <summary>
     ///     Instantiates a new <see cref="ApplicationCommandAttribute"/> with the specified alias.

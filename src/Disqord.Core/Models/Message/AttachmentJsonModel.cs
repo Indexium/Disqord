@@ -29,6 +29,9 @@ public class AttachmentJsonModel : PartialAttachmentJsonModel
     [JsonProperty("ephemeral")]
     public Optional<bool> Ephemeral;
 
+    [JsonProperty("flags")]
+    public Optional<AttachmentFlags> Flags;
+
     [JsonProperty("duration_secs")]
     public Optional<float> DurationSecs;
 

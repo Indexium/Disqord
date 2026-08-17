@@ -17,4 +17,6 @@ public interface IRoleAuditLogData
     Optional<bool> IsMentionable { get; }
 
     Optional<string> UnicodeEmoji { get; }
+
+    Optional<RoleColors?> Colors { get; }
 }

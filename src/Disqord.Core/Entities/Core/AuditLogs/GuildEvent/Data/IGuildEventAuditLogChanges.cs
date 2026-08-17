@@ -1,4 +1,6 @@
-﻿namespace Disqord.AuditLogs;
+﻿using System;
+
+namespace Disqord.AuditLogs;
 
 public interface IGuildEventAuditLogChanges
 {
@@ -17,4 +19,8 @@ public interface IGuildEventAuditLogChanges
     AuditLogChange<PrivacyLevel> PrivacyLevel { get; }
 
     AuditLogChange<GuildEventStatus> Status { get; }
+
+    AuditLogChange<DateTimeOffset> StartsAt { get; }
+
+    AuditLogChange<DateTimeOffset?> EndsAt { get; }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -252,14 +252,14 @@ public static partial class RestClientExtensions
         return CreateThreads(client, model).Threads;
     }
 
-    public static async Task<IMember?> FetchMemberAsync(this IRestClient client,
+    public static async Task<IRestMember?> FetchMemberAsync(this IRestClient client,
         Snowflake guildId, Snowflake memberId,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         try
         {
             var model = await client.ApiClient.FetchMemberAsync(guildId, memberId, options, cancellationToken).ConfigureAwait(false);
-            return new TransientMember(client, guildId, model);
+            return new TransientRestMember(client, guildId, model);
         }
         catch (RestApiException ex) when (ex.IsError(RestApiErrorCode.UnknownMember))
         {
@@ -304,7 +304,7 @@ public static partial class RestClientExtensions
         return models.ToReadOnlyList((client, guildId), (x, state) =>
         {
             var (client, guildId) = state;
-            return new TransientMember(client, guildId, x);
+            return new TransientRestMember(client, guildId, x);
         });
     }
 
@@ -316,11 +316,11 @@ public static partial class RestClientExtensions
         return models.ToReadOnlyList((client, guildId), static (x, state) =>
         {
             var (client, guildId) = state;
-            return new TransientMember(client, guildId, x);
+            return new TransientRestMember(client, guildId, x);
         });
     }
 
-    public static async Task<IMember> AddMemberAsync(this IRestClient client,
+    public static async Task<IRestMember> AddMemberAsync(this IRestClient client,
         Snowflake guildId, Snowflake userId, BearerToken token,
         Action<AddMemberActionProperties>? action = null,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
@@ -337,25 +337,25 @@ public static partial class RestClientExtensions
         }
 
         var model = await client.ApiClient.AddMemberAsync(guildId, userId, content, options, cancellationToken).ConfigureAwait(false);
-        return new TransientMember(client, guildId, model);
+        return new TransientRestMember(client, guildId, model);
     }
 
-    public static async Task<IMember> ModifyMemberAsync(this IRestClient client,
+    public static async Task<IRestMember> ModifyMemberAsync(this IRestClient client,
         Snowflake guildId, Snowflake memberId, Action<ModifyMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         var content = action.ToContent();
         var model = await client.ApiClient.ModifyMemberAsync(guildId, memberId, content, options, cancellationToken).ConfigureAwait(false);
-        return new TransientMember(client, guildId, model);
+        return new TransientRestMember(client, guildId, model);
     }
 
-    public static async Task<IMember> ModifyCurrentMemberAsync(this IRestClient client,
+    public static async Task<IRestMember> ModifyCurrentMemberAsync(this IRestClient client,
         Snowflake guildId, Action<ModifyCurrentMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         var content = action.ToContent();
         var model = await client.ApiClient.ModifyCurrentMemberAsync(guildId, content, options, cancellationToken).ConfigureAwait(false);
-        return new TransientMember(client, guildId, model);
+        return new TransientRestMember(client, guildId, model);
     }
 
     [Obsolete("Use ModifyCurrentMemberAsync() instead.")]
@@ -469,6 +469,124 @@ public static partial class RestClientExtensions
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         return client.ApiClient.DeleteBanAsync(guildId, userId, options, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Bans the users with the specified IDs from the specified guild, enumerating the results in batches.
+    /// </summary>
+    /// <remarks>
+    ///     Each iteration yields the <see cref="IBulkBanResponse"/> for a single batch of up to
+    ///     <see cref="Discord.Limits.Rest.BulkBanUsersPageSize"/> users.
+    ///     <para/>
+    ///     Users that could not be banned (including a whole batch Discord rejects with
+    ///     <see cref="RestApiErrorCode.FailedToBanUsers"/>) are reported in <see cref="IBulkBanResponse.FailedUserIds"/>;
+    ///     this method never throws that error.
+    /// </remarks>
+    /// <param name="client"> The REST client. </param>
+    /// <param name="guildId"> The ID of the guild to ban the users from. </param>
+    /// <param name="userIds"> The IDs of the users to ban. </param>
+    /// <param name="deleteMessageDuration"> If specified, deletes each banned user's messages sent within this duration. </param>
+    /// <param name="options"> The optional request options. </param>
+    /// <returns>
+    ///     A paged enumerable yielding an <see cref="IBulkBanResponse"/> for each batch of banned users.
+    /// </returns>
+    public static IPagedEnumerable<IBulkBanResponse> EnumerateBanCreation(this IRestClient client,
+        Snowflake guildId, IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null)
+    {
+        Guard.IsNotNull(userIds);
+
+        var deleteMessageSeconds = Optional.FromNullable((int?) deleteMessageDuration?.TotalSeconds);
+        return PagedEnumerable.Create((state, cancellationToken) =>
+        {
+            var (client, guildId, userIds, deleteMessageSeconds, options) = state;
+            return new CreateBansPagedEnumerator(client, guildId, userIds, deleteMessageSeconds, options, cancellationToken);
+        }, (client, guildId, userIds.Distinct().ToArray(), deleteMessageSeconds, options));
+    }
+
+    /// <summary>
+    ///     Bans the users with the specified IDs from the specified guild.
+    /// </summary>
+    /// <remarks>
+    ///     <inheritdoc cref="EnumerateBanCreation"/>
+    /// </remarks>
+    /// <param name="client"> The REST client. </param>
+    /// <param name="guildId"> The ID of the guild to ban the users from. </param>
+    /// <param name="userIds"> The IDs of the users to ban. </param>
+    /// <param name="deleteMessageDuration"> If specified, deletes each banned user's messages sent within this duration. </param>
+    /// <param name="options"> The optional request options. </param>
+    /// <param name="cancellationToken"> The cancellation token to observe. </param>
+    /// <returns>
+    ///     An <see cref="IBulkBanResponse"/> aggregating the banned and failed user IDs.
+    /// </returns>
+    public static async Task<IBulkBanResponse> CreateBansAsync(this IRestClient client,
+        Snowflake guildId, IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(userIds);
+
+        var ids = userIds.Distinct().ToArray();
+        var deleteMessageSeconds = Optional.FromNullable((int?) deleteMessageDuration?.TotalSeconds);
+
+        if (ids.Length == 0)
+        {
+            return new TransientBulkBanResponse(new GuildBulkBanJsonModel
+            {
+                BannedUsers = [],
+                FailedUsers = []
+            });
+        }
+
+        if (ids.Length <= Discord.Limits.Rest.BulkBanUsersPageSize)
+        {
+            var model = await client.InternalCreateBansAsync(guildId, ids, deleteMessageSeconds, options, cancellationToken).ConfigureAwait(false);
+            return new TransientBulkBanResponse(model);
+        }
+
+        var bannedUserIds = new List<Snowflake>();
+        var failedUserIds = new List<Snowflake>();
+        var enumerator = client.EnumerateBanCreation(guildId, ids, deleteMessageDuration, options).GetAsyncEnumerator(cancellationToken);
+        await using (enumerator.ConfigureAwait(false))
+        {
+            while (await enumerator.MoveNextAsync().ConfigureAwait(false))
+            {
+                foreach (var response in enumerator.Current)
+                {
+                    bannedUserIds.AddRange(response.BannedUserIds);
+                    failedUserIds.AddRange(response.FailedUserIds);
+                }
+            }
+        }
+
+        return new TransientBulkBanResponse(new GuildBulkBanJsonModel
+        {
+            BannedUsers = bannedUserIds.ToArray(),
+            FailedUsers = failedUserIds.ToArray()
+        });
+    }
+
+    internal static async Task<GuildBulkBanJsonModel> InternalCreateBansAsync(this IRestClient client,
+        Snowflake guildId, ArraySegment<Snowflake> userIds, Optional<int> deleteMessageSeconds,
+        IRestRequestOptions? options, CancellationToken cancellationToken)
+    {
+        var content = new CreateBansJsonRestRequestContent
+        {
+            UserIds = userIds,
+            DeleteMessageSeconds = deleteMessageSeconds
+        };
+
+        try
+        {
+            return await client.ApiClient.CreateBansAsync(guildId, content, options, cancellationToken).ConfigureAwait(false);
+        }
+        catch (RestApiException exception) when (exception.IsError(RestApiErrorCode.FailedToBanUsers))
+        {
+            return new GuildBulkBanJsonModel
+            {
+                BannedUsers = [],
+                FailedUsers = userIds.ToArray()
+            };
+        }
     }
 
     public static async Task<IReadOnlyList<IRole>> FetchRolesAsync(this IRestClient client,

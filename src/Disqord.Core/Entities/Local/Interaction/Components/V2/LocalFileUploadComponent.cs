@@ -46,6 +46,7 @@ public class LocalFileUploadComponent : LocalComponent, ILocalConstruct<LocalFil
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalFileUploadComponent(LocalFileUploadComponent other)
+        : base(other)
     {
         CustomId = other.CustomId;
         MinimumUploadedFiles = other.MinimumUploadedFiles;

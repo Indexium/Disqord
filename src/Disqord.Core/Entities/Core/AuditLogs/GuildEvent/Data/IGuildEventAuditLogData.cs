@@ -1,4 +1,5 @@
-﻿using Qommon;
+﻿using System;
+using Qommon;
 
 namespace Disqord.AuditLogs;
 
@@ -19,4 +20,8 @@ public interface IGuildEventAuditLogData
     Optional<PrivacyLevel> PrivacyLevel { get; }
 
     Optional<GuildEventStatus> Status { get; }
+
+    Optional<DateTimeOffset> StartsAt { get; }
+
+    Optional<DateTimeOffset?> EndsAt { get; }
 }

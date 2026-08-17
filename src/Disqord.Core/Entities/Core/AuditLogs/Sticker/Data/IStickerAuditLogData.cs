@@ -1,3 +1,4 @@
+﻿using System;
 using Qommon;
 
 namespace Disqord.AuditLogs;
@@ -14,5 +15,6 @@ public interface IStickerAuditLogData
 
     Optional<bool> IsAvailable { get; }
 
+    [Obsolete("Use IAuditLog.GuildId instead.")]
     Optional<Snowflake> GuildId { get; }
 }

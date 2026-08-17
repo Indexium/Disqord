@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using Disqord.Models;
 
@@ -30,6 +30,12 @@ public abstract class CachedShareeUser : CachedUser
 
     /// <inheritdoc/>
     public override IUserPrimaryGuild? PrimaryGuild => SharedUser.PrimaryGuild;
+
+    /// <inheritdoc/>
+    public override IAvatarDecoration? AvatarDecoration => SharedUser.AvatarDecoration;
+
+    /// <inheritdoc/>
+    public override ICollectibles? Collectibles => SharedUser.Collectibles;
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public CachedSharedUser SharedUser { get; private set; }

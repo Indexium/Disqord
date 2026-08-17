@@ -31,6 +31,9 @@ public abstract class TransientGuildChannel : TransientChannel, IGuildChannel
     public GuildChannelFlags Flags => Model.Flags.Value;
 
     /// <inheritdoc/>
+    public bool IsObfuscated => Flags.HasFlag(GuildChannelFlags.Obfuscated);
+
+    /// <inheritdoc/>
     public string Mention => Disqord.Mention.Channel(this);
 
     protected TransientGuildChannel(IClient client, ChannelJsonModel model)

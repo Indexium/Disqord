@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disqord.Gateway.Api.Models;
 using Disqord.Utilities.Threading;
+using Disqord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Qommon.Binding;
@@ -62,6 +63,10 @@ public class DefaultGatewayHeartbeater : IGatewayHeartbeater
         }
         catch (OperationCanceledException)
         { }
+        catch (WebSocketClosedException ex)
+        {
+            Logger.LogDebug(ex, "The connection was closed while heartbeating.");
+        }
         catch (Exception ex)
         {
             Logger.LogError(ex, "An exception occurred while heartbeating.");

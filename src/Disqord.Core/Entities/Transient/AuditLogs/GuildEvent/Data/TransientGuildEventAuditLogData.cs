@@ -1,4 +1,5 @@
-﻿using Disqord.Models;
+﻿using System;
+using Disqord.Models;
 using Qommon;
 
 namespace Disqord.AuditLogs;
@@ -29,6 +30,12 @@ public class TransientGuildEventAuditLogData : IGuildEventAuditLogData
     /// <inheritdoc/>
     public Optional<GuildEventStatus> Status { get; }
 
+    /// <inheritdoc/>
+    public Optional<DateTimeOffset> StartsAt { get; }
+
+    /// <inheritdoc/>
+    public Optional<DateTimeOffset?> EndsAt { get; }
+
     public TransientGuildEventAuditLogData(IClient client, AuditLogEntryJsonModel model, bool isCreated)
     {
         var changes = new TransientGuildEventAuditLogChanges(client, model);
@@ -42,6 +49,8 @@ public class TransientGuildEventAuditLogData : IGuildEventAuditLogData
             Location = changes.Location.NewValue;
             PrivacyLevel = changes.PrivacyLevel.NewValue;
             Status = changes.Status.NewValue;
+            StartsAt = changes.StartsAt.NewValue;
+            EndsAt = changes.EndsAt.NewValue;
         }
         else
         {
@@ -53,6 +62,8 @@ public class TransientGuildEventAuditLogData : IGuildEventAuditLogData
             Location = changes.Location.OldValue;
             PrivacyLevel = changes.PrivacyLevel.OldValue;
             Status = changes.Status.OldValue;
+            StartsAt = changes.StartsAt.OldValue;
+            EndsAt = changes.EndsAt.OldValue;
         }
     }
 }

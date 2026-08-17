@@ -25,6 +25,7 @@ public class LocalFileComponent : LocalComponent, ILocalSpoilerable, ILocalConst
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalFileComponent(LocalFileComponent other)
+        : base(other)
     {
         File = other.File.Clone();
         IsSpoiler = other.IsSpoiler;

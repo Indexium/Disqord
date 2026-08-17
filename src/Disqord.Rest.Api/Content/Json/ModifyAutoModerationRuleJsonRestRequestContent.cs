@@ -1,4 +1,4 @@
-using Disqord.Models;
+﻿using Disqord.Models;
 using Disqord.Serialization.Json;
 using Qommon;
 
@@ -29,6 +29,10 @@ public class ModifyAutoModerationRuleJsonRestRequestContent : JsonModelRestReque
 
     protected override void OnValidate()
     {
-        // TODO: Add validation when docs pr is merged
+        RestContentValidation.AutoModeration.ValidateName(Name);
+        RestContentValidation.AutoModeration.ValidateExemptRoles(ExemptRoles);
+        RestContentValidation.AutoModeration.ValidateExemptChannels(ExemptChannels);
+        RestContentValidation.AutoModeration.ValidateActions(Actions);
+        RestContentValidation.AutoModeration.ValidateTriggerMetadata(TriggerMetadata);
     }
 }

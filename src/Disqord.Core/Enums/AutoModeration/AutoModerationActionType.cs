@@ -1,4 +1,4 @@
-namespace Disqord;
+﻿namespace Disqord;
 
 /// <summary>
 ///     Represents the types of actions that can be performed when an auto-moderation rule is triggered.
@@ -18,5 +18,10 @@ public enum AutoModerationActionType
     /// <summary>
     ///     Times-out the offending user.
     /// </summary>
-    Timeout = 3
+    Timeout = 3,
+
+    /// <summary>
+    ///     Prevents the offending member from interacting within the guild.
+    /// </summary>
+    BlockMemberInteraction = 4,
 }

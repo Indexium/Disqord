@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Qommon;
 
 namespace Disqord;
@@ -114,7 +115,9 @@ public class LocalSlashCommandOption : ILocalConstruct<LocalSlashCommandOption>
 
         Type = other.Type;
         Name = other.Name;
+        NameLocalizations = Optional.Convert(other.NameLocalizations, localizations => localizations.ToDictionary() as IDictionary<CultureInfo, string>);
         Description = other.Description;
+        DescriptionLocalizations = Optional.Convert(other.DescriptionLocalizations, localizations => localizations.ToDictionary() as IDictionary<CultureInfo, string>);
         IsRequired = other.IsRequired;
         Choices = other.Choices.DeepClone();
         Options = other.Options.DeepClone();

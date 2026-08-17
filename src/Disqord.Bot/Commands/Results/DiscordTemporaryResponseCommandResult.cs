@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Disqord.Rest;
 using Microsoft.Extensions.Logging;
 
 namespace Disqord.Bot.Commands;
@@ -28,9 +29,11 @@ public class DiscordTemporaryResponseCommandResult(DiscordResponseCommandResult 
         }
         catch (OperationCanceledException)
         { }
+        catch (RestApiException ex) when (ex.IsError(RestApiErrorCode.UnknownMessage))
+        { }
         catch (Exception ex)
         {
-            Context.Bot.Logger.LogError(ex, "An exception occurred while deleting the temporary response message ({0}).", message.Id);
+            Context.Bot.Logger.LogWarning(ex, "An exception occurred while deleting the temporary response message {MessageId} in channel {ChannelId}.", message.Id, message.ChannelId);
         }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Disqord;
 
@@ -21,5 +21,16 @@ public enum GuildChannelFlags
     /// <summary>
     ///     The media channel hides the embedded media download options for media in the threads created in it.
     /// </summary>
-    HideMediaDownloadOptions = 1 << 15
+    HideMediaDownloadOptions = 1 << 15,
+
+    /// <summary>
+    ///     The metadata of the channel has been obfuscated because the current user cannot view it.
+    /// </summary>
+    /// <seealso href="https://discord.com/developers/docs/resources/channel#channel-object-obfuscated-channels"> Discord documentation </seealso>
+    Obfuscated = 1 << 17,
+
+    /// <summary>
+    ///     The channel is marked as a spoiler.
+    /// </summary>
+    Spoiler = 1 << 21,
 }

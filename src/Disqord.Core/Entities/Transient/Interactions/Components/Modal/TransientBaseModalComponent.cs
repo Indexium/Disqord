@@ -1,4 +1,5 @@
-﻿using Disqord.Models;
+﻿using System;
+using Disqord.Models;
 
 namespace Disqord;
 
@@ -8,6 +9,6 @@ public class TransientModalComponent<TModalComponentModel>(ModalBaseComponentJso
 {
     void IJsonUpdatable<ModalBaseComponentJsonModel>.Update(ModalBaseComponentJsonModel model)
     {
-        ((IJsonUpdatable<ModalBaseComponentJsonModel>) this).Update(model);
+        throw new NotSupportedException("Transient entities do not support updates.");
     }
 }

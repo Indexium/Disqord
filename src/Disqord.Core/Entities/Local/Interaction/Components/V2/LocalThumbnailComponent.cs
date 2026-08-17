@@ -30,6 +30,7 @@ public class LocalThumbnailComponent : LocalComponent, ILocalComponentMediaItem,
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalThumbnailComponent(LocalThumbnailComponent other)
+        : base(other)
     {
         Media = other.Media.Clone();
         Description = other.Description;

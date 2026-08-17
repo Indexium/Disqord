@@ -42,6 +42,9 @@ public class CachedRole : CachedSnowflakeEntity, IRole
     /// <inheritdoc/>
     public IRoleTags Tags { get; private set; } = null!;
 
+    /// <inheritdoc/>
+    public RoleFlags Flags { get; private set; }
+
     public string Mention => Disqord.Mention.Role(this);
 
     public CachedRole(IGatewayClient client, Snowflake guildId, RoleJsonModel model)
@@ -67,5 +70,6 @@ public class CachedRole : CachedSnowflakeEntity, IRole
         IsMentionable = model.Mentionable;
         UnicodeEmoji = Optional.ConvertOrDefault(model.UnicodeEmoji, emojiName => emojiName != null ? new TransientEmoji(emojiName) : null);
         Tags = Optional.ConvertOrDefault(model.Tags, model => new TransientRoleTags(model), IRoleTags.Empty);
+        Flags = model.Flags;
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Disqord.Gateway.Api.Models;
@@ -21,6 +21,11 @@ public interface IShard : ILogging, IAsyncDisposable
     ///     Gets the intents of this shard.
     /// </summary>
     GatewayIntents Intents { get; }
+
+    /// <summary>
+    ///     Gets the capabilities of this shard.
+    /// </summary>
+    GatewayCapabilities Capabilities { get; }
 
     /// <summary>
     ///     Gets the large guild threshold of this shard.

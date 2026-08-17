@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -169,9 +168,9 @@ public abstract partial class DiscordBotBase
                                 }
                             }
 
-                            if (groupIsEnabledInPrivateChannels.HasValue && isEnabledInPrivateChannels.HasValue)
+                            if (groupIsEnabledInPrivateChannels.HasValue)
                             {
-                                if (groupIsEnabledInPrivateChannels.Value != isEnabledInPrivateChannels.Value)
+                                if (isEnabledInPrivateChannels.HasValue && groupIsEnabledInPrivateChannels.Value != isEnabledInPrivateChannels.Value)
                                     throw new InvalidOperationException($"Cannot apply {(groupIsEnabledInPrivateChannels.Value ? nameof(RequirePrivateAttribute) : nameof(RequireGuildAttribute))} if other checks contain {(groupIsEnabledInPrivateChannels.Value ? nameof(RequireGuildAttribute) : nameof(RequirePrivateAttribute))}.");
 
                                 isEnabledInPrivateChannels = groupIsEnabledInPrivateChannels;
@@ -205,7 +204,6 @@ public abstract partial class DiscordBotBase
                 var requiredMemberPermissions = Optional<Permissions>.Empty;
                 var isEnabledInPrivateChannels = Optional<bool>.Empty;
                 var isAgeRestricted = false;
-                var hasModuleAlias = false;
                 var moduleCount = modules.Count;
                 for (var i = moduleCount - 1; i >= 0; i--)
                 {
@@ -214,16 +212,9 @@ public abstract partial class DiscordBotBase
 
                     if (!isAgeRestricted)
                         isAgeRestricted = IsAgeRestricted(module.Checks);
-
-                    if (module.Alias != null)
-                    {
-                        hasModuleAlias = true;
-                        break;
-                    }
                 }
 
-                if (!hasModuleAlias)
-                    GetPermissions(command.Checks, ref requiredMemberPermissions, ref isEnabledInPrivateChannels);
+                GetPermissions(command.Checks, ref requiredMemberPermissions, ref isEnabledInPrivateChannels);
 
                 if (!isAgeRestricted)
                     isAgeRestricted = IsAgeRestricted(command.Checks);
@@ -267,6 +258,22 @@ public abstract partial class DiscordBotBase
 
                 var nameCount = names.Count;
 
+                static bool HasNonSubcommandOptions(LocalSlashCommand command)
+                {
+                    if (!command.Options.TryGetValue(out var existingOptions) || existingOptions == null)
+                        return false;
+
+                    var existingOptionCount = existingOptions.Count;
+                    for (var i = 0; i < existingOptionCount; i++)
+                    {
+                        var existingOptionType = existingOptions[i].Type;
+                        if (existingOptionType.HasValue && existingOptionType.Value is not (SlashCommandOptionType.Subcommand or SlashCommandOptionType.SubcommandGroup))
+                            return true;
+                    }
+
+                    return false;
+                }
+
                 // var isCached = commandCache.TryGetValue(command, out var cachedLocalApplicationCommand);
                 LocalSlashCommand? localSlashCommand = null; /*= cachedLocalApplicationCommand as LocalSlashCommand;*/
                 var commandCount = localCommands.Count;
@@ -283,6 +290,9 @@ public abstract partial class DiscordBotBase
                     if (nameCount == 1)
                         throw new InvalidOperationException($"Duplicate top-level application command alias '{alias}' encountered.");
 
+                    if (HasNonSubcommandOptions(existingLocalSlashCommand))
+                        throw new InvalidOperationException($"The application command alias '{alias}' is used both as a standalone command and as a subcommand group; using subcommands or subcommand groups makes the base command unusable.");
+
                     localSlashCommand = existingLocalSlashCommand;
                     break;
                 }
@@ -298,9 +308,25 @@ public abstract partial class DiscordBotBase
 
                     // commandCache.Add(command, localSlashCommand);
                 }
-                else if (isAgeRestricted)
+                else
                 {
-                    localSlashCommand.IsAgeRestricted = isAgeRestricted;
+                    if (requiredMemberPermissions.HasValue)
+                    {
+                        localSlashCommand.DefaultRequiredMemberPermissions = localSlashCommand.DefaultRequiredMemberPermissions.GetValueOrDefault() | requiredMemberPermissions.Value;
+                    }
+
+                    if (isEnabledInPrivateChannels.HasValue)
+                    {
+                        if (localSlashCommand.IsEnabledInPrivateChannels.HasValue && localSlashCommand.IsEnabledInPrivateChannels.Value != isEnabledInPrivateChannels.Value)
+                            throw new InvalidOperationException($"Cannot apply {(isEnabledInPrivateChannels.Value ? nameof(RequirePrivateAttribute) : nameof(RequireGuildAttribute))} if other subcommands of the same group contain {(isEnabledInPrivateChannels.Value ? nameof(RequireGuildAttribute) : nameof(RequirePrivateAttribute))}.");
+
+                        localSlashCommand.IsEnabledInPrivateChannels = isEnabledInPrivateChannels;
+                    }
+
+                    if (isAgeRestricted)
+                    {
+                        localSlashCommand.IsAgeRestricted = isAgeRestricted;
+                    }
                 }
 
                 LocalSlashCommandOption? lastAliasOption = null;
@@ -337,11 +363,11 @@ public abstract partial class DiscordBotBase
                         if (existingOption.Name != name.Alias)
                             continue;
 
-                        if ( /*!isCached && */i != nameCount - 1 && existingOption.Type != SlashCommandOptionType.SubcommandGroup)
-                            throw new InvalidOperationException($"Duplicate application subcommand group alias '{name.Alias}' encountered.");
-
-                        if ( /*!isCached && */i == nameCount - 1)
+                        if (i == 0)
                             throw new InvalidOperationException($"Duplicate application subcommand alias '{name.Alias}' encountered.");
+
+                        if (existingOption.Type != SlashCommandOptionType.SubcommandGroup)
+                            throw new InvalidOperationException($"Duplicate application subcommand group alias '{name.Alias}' encountered.");
 
                         lastAliasOption = existingOption;
                         break;
@@ -383,6 +409,9 @@ public abstract partial class DiscordBotBase
                     {
                         static LocalSlashCommandOption GetOption(ApplicationParameter parameter)
                         {
+                            // Discord documents NUMBER option bounds as any double between -2^53 and 2^53.
+                            const double maximumSafeNumberOptionValue = 9_007_199_254_740_992d;
+
                             var typeInformation = parameter.GetTypeInformation();
                             var option = new LocalSlashCommandOption
                             {
@@ -462,12 +491,14 @@ public abstract partial class DiscordBotBase
                                 else if (actualType == typeof(float))
                                 {
                                     option.Type = SlashCommandOptionType.Number;
-                                    option.MinimumValue = float.MinValue;
-                                    option.MaximumValue = float.MaxValue;
+                                    option.MinimumValue = -maximumSafeNumberOptionValue;
+                                    option.MaximumValue = maximumSafeNumberOptionValue;
                                 }
                                 else if (actualType == typeof(double))
                                 {
                                     option.Type = SlashCommandOptionType.Number;
+                                    option.MinimumValue = -maximumSafeNumberOptionValue;
+                                    option.MaximumValue = maximumSafeNumberOptionValue;
                                 }
                                 else if (typeof(IUser).IsAssignableFrom(actualType))
                                 {
@@ -481,7 +512,7 @@ public abstract partial class DiscordBotBase
                                 {
                                     option.Type = SlashCommandOptionType.Role;
                                 }
-                                else if (typeof(ISnowflakeEntity).IsAssignableFrom(actualType))
+                                else if (typeof(IMentionableEntity).IsAssignableFrom(actualType))
                                 {
                                     option.Type = SlashCommandOptionType.Mentionable;
                                 }
@@ -592,6 +623,8 @@ public abstract partial class DiscordBotBase
                                     else
                                     {
                                         option.Type = SlashCommandOptionType.String;
+                                        option.MinimumValue = Optional<double>.Empty;
+                                        option.MaximumValue = Optional<double>.Empty;
                                     }
                                 }
                                 else
@@ -695,6 +728,9 @@ public abstract partial class DiscordBotBase
                                 {
                                     if (autoCompleteParameters[j].Name == option.Name && typeof(IAutoComplete).IsAssignableFrom(autoCompleteParameters[j].ReflectedType))
                                     {
+                                        if (option.Choices.HasValue && option.Choices.Value?.Count > 0)
+                                            throw new InvalidOperationException($"The parameter '{option.Name.Value}' of command '{command.Alias}' cannot have auto-complete enabled while it also has choices.");
+
                                         option.HasAutoComplete = true;
                                         break;
                                     }
@@ -770,7 +806,7 @@ public abstract partial class DiscordBotBase
 
         static Task<IReadOnlyList<IApplicationCommand>> GetSyncStrategyTask(DiscordBotBase bot, Snowflake applicationId,
             Snowflake? guildId, IEnumerable<LocalApplicationCommand> commands, IApplicationCommandCacheChanges changes,
-            DefaultRestRequestOptions options, CancellationToken cancellationToken)
+            bool forceBulk, DefaultRestRequestOptions options, CancellationToken cancellationToken)
         {
             const int BulkChangeThreshold = 5;
 
@@ -784,7 +820,7 @@ public abstract partial class DiscordBotBase
                 bot.Logger.LogDebug("Guild ({0}) application command states: {1} unchanged, {2} created, {3} modified, {4} deleted.", guildId, unchangedCount, createdCount, modifiedCount, deletedCount);
 
             var totalChangeCount = createdCount + modifiedCount + deletedCount;
-            if (changes.AreInitial || totalChangeCount > BulkChangeThreshold)
+            if (forceBulk || changes.AreInitial || totalChangeCount > BulkChangeThreshold)
             {
                 return guildId == null
                     ? bot.SetGlobalApplicationCommandsAsync(applicationId, commands, options, cancellationToken)
@@ -808,16 +844,29 @@ public abstract partial class DiscordBotBase
                 void Action(ModifyApplicationCommandActionProperties properties)
                 {
                     properties.Name = command.Name;
-                    properties.NameLocalizations = Optional.Convert(command.NameLocalizations, localizations => localizations as IEnumerable<KeyValuePair<CultureInfo, string>>);
+                    properties.NameLocalizations = new Optional<IEnumerable<KeyValuePair<CultureInfo, string>>>(
+                        command.NameLocalizations.HasValue
+                            ? command.NameLocalizations.Value
+                            : Array.Empty<KeyValuePair<CultureInfo, string>>());
 
                     if (command is LocalSlashCommand slashCommand)
                     {
                         properties.Description = slashCommand.Description;
-                        properties.DescriptionLocalizations = Optional.Convert(slashCommand.DescriptionLocalizations, localizations => localizations as IEnumerable<KeyValuePair<CultureInfo, string>>);
-                        properties.Options = Optional.Convert(slashCommand.Options, options => options as IEnumerable<LocalSlashCommandOption>);
+                        properties.DescriptionLocalizations = new Optional<IEnumerable<KeyValuePair<CultureInfo, string>>>(
+                            slashCommand.DescriptionLocalizations.HasValue
+                                ? slashCommand.DescriptionLocalizations.Value
+                                : Array.Empty<KeyValuePair<CultureInfo, string>>());
+
+                        properties.Options = new Optional<IEnumerable<LocalSlashCommandOption>>(
+                            slashCommand.Options.HasValue
+                                ? slashCommand.Options.Value
+                                : Array.Empty<LocalSlashCommandOption>());
                     }
 
-                    properties.DefaultRequiredMemberPermissions = command.DefaultRequiredMemberPermissions;
+                    properties.DefaultRequiredMemberPermissions = new Optional<Permissions?>(
+                        command.DefaultRequiredMemberPermissions.HasValue
+                            ? command.DefaultRequiredMemberPermissions.Value
+                            : null);
                     properties.IsEnabledInPrivateChannels = command.IsEnabledInPrivateChannels.GetValueOrDefault(true);
                     properties.IsEnabledByDefault = command.IsEnabledByDefault;
                     properties.IsAgeRestricted = command.IsAgeRestricted;
@@ -852,6 +901,12 @@ public abstract partial class DiscordBotBase
                         continue;
                     }
 
+                    if (task.IsCanceled)
+                    {
+                        exceptions.Add(new TaskCanceledException(task));
+                        continue;
+                    }
+
                     if (task is not Task<IApplicationCommand> resultTask)
                         continue;
 
@@ -873,15 +928,15 @@ public abstract partial class DiscordBotBase
             var requestOptions = new DefaultRestRequestOptions();
 
             var applicationId = _applicationId ?? (_currentApplication ??= await this.FetchCurrentApplicationAsync(requestOptions, cancellationToken).ConfigureAwait(false)).Id;
-            var commandChanges = new List<(Snowflake?, IApplicationCommandCacheChanges)>();
+            var entries = new List<(Snowflake? GuildId, IApplicationCommandCacheChanges Changes, IEnumerable<LocalApplicationCommand> Commands, bool IsOrphanedGuild)>();
             var tasks = new List<Task<IReadOnlyList<IApplicationCommand>>>();
             if (_syncGlobalApplicationCommands)
             {
                 var changes = cache.GetChanges(null, globalCommands);
-                if (changes.Any)
+                if (changes.Any || changes.AreInitial)
                 {
-                    commandChanges.Add((null, changes));
-                    tasks.Add(GetSyncStrategyTask(this, applicationId, null, globalCommands, changes, requestOptions, cancellationToken));
+                    entries.Add((null, changes, globalCommands, false));
+                    tasks.Add(GetSyncStrategyTask(this, applicationId, null, globalCommands, changes, false, requestOptions, cancellationToken));
                 }
                 else
                 {
@@ -894,15 +949,28 @@ public abstract partial class DiscordBotBase
                 foreach (var (guildId, commands) in guildCommands)
                 {
                     var changes = cache.GetChanges(guildId, commands);
-                    if (changes.Any)
+                    if (changes.Any || changes.AreInitial)
                     {
-                        commandChanges.Add((guildId, changes));
-                        tasks.Add(GetSyncStrategyTask(this, applicationId, guildId, commands, changes, requestOptions, cancellationToken));
+                        entries.Add((guildId, changes, commands, false));
+                        tasks.Add(GetSyncStrategyTask(this, applicationId, guildId, commands, changes, false, requestOptions, cancellationToken));
                     }
                     else
                     {
                         Logger.LogDebug("Guild ({0}) application commands are up-to-date.", guildId);
                     }
+                }
+
+                var orphanedGuildIds = GetOrphanedApplicationCommandGuildIds(cache, guildCommands);
+                foreach (var orphanedGuildId in orphanedGuildIds)
+                {
+                    var emptyCommands = Array.Empty<LocalApplicationCommand>();
+                    var changes = cache.GetChanges(orphanedGuildId, emptyCommands);
+                    if (!changes.Any)
+                        continue;
+
+                    Logger.LogDebug("Guild ({0}) no longer has any declared commands, deleting its cached commands.", orphanedGuildId);
+                    entries.Add((orphanedGuildId, changes, emptyCommands, true));
+                    tasks.Add(GetSyncStrategyTask(this, applicationId, orphanedGuildId, emptyCommands, changes, false, requestOptions, cancellationToken));
                 }
             }
 
@@ -910,20 +978,89 @@ public abstract partial class DiscordBotBase
             var continuation = whenAllTask.ContinueWith(_ => { }, default(CancellationToken));
             await continuation.ConfigureAwait(false);
 
+            List<Exception>? fatalExceptions = null;
+            var retryEntries = new List<(Snowflake? GuildId, IApplicationCommandCacheChanges Changes, IEnumerable<LocalApplicationCommand> Commands, bool IsOrphanedGuild)>();
+            var retryTasks = new List<Task<IReadOnlyList<IApplicationCommand>>>();
             var count = tasks.Count;
             for (var i = 0; i < count; i++)
             {
                 var task = tasks[i];
-                if (!task.IsCompletedSuccessfully)
+                var entry = entries[i];
+                if (task.IsCompletedSuccessfully)
+                {
+                    cache.ApplyChanges(entry.GuildId, entry.Changes, task.Result);
                     continue;
+                }
 
-                var (guildId, changes) = commandChanges[i];
-                cache.ApplyChanges(guildId, changes, task.Result);
+                if (entry.IsOrphanedGuild && IsGuildInaccessibleFailure(task.Exception))
+                {
+                    Logger.LogWarning(task.Exception, "Forgetting the cached application commands for guild ({0}) since the bot no longer has access to it.", entry.GuildId);
+                    cache.ApplyChanges(entry.GuildId, entry.Changes, Array.Empty<IApplicationCommand>());
+                    continue;
+                }
+
+                Logger.LogWarning(task.Exception, "Application command sync failed for {0}, retrying as a full overwrite.",
+                    entry.GuildId == null ? "global commands" : $"guild ({entry.GuildId})");
+                retryEntries.Add(entry);
+                retryTasks.Add(GetSyncStrategyTask(this, applicationId, entry.GuildId, entry.Commands, entry.Changes, true, requestOptions, cancellationToken));
             }
 
-            if (whenAllTask.Exception != null)
-                ExceptionDispatchInfo.Capture(whenAllTask.Exception).Throw();
+            if (retryTasks.Count != 0)
+            {
+                var retryWhenAllTask = Task.WhenAll(retryTasks);
+                var retryContinuation = retryWhenAllTask.ContinueWith(_ => { }, default(CancellationToken));
+                await retryContinuation.ConfigureAwait(false);
+
+                var retryCount = retryTasks.Count;
+                for (var i = 0; i < retryCount; i++)
+                {
+                    var retryTask = retryTasks[i];
+                    var entry = retryEntries[i];
+                    if (retryTask.IsCompletedSuccessfully)
+                    {
+                        cache.ApplyChanges(entry.GuildId, entry.Changes, retryTask.Result);
+                        continue;
+                    }
+
+                    (fatalExceptions ??= new()).Add(retryTask.Exception!);
+                }
+            }
+
+            if (fatalExceptions != null)
+                throw new AggregateException("Application command sync failed.", fatalExceptions);
         }
+    }
+
+    private static List<Snowflake> GetOrphanedApplicationCommandGuildIds(IApplicationCommandCache cache,
+        IReadOnlyDictionary<Snowflake, IEnumerable<LocalApplicationCommand>> guildCommands)
+    {
+        var orphanedGuildIds = new List<Snowflake>();
+        foreach (var guildId in cache.GuildIds)
+        {
+            if (!guildCommands.ContainsKey(guildId))
+            {
+                orphanedGuildIds.Add(guildId);
+            }
+        }
+
+        return orphanedGuildIds;
+    }
+
+    private static bool IsGuildInaccessibleFailure(AggregateException? exception)
+    {
+        if (exception == null)
+            return false;
+
+        foreach (var innerException in exception.Flatten().InnerExceptions)
+        {
+            if (innerException is RestApiException restApiException
+                && (restApiException.IsError(RestApiErrorCode.MissingAccess) || restApiException.IsError(RestApiErrorCode.UnknownGuild)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

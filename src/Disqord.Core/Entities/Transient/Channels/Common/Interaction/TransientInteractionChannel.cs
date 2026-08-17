@@ -1,4 +1,4 @@
-using Disqord.Models;
+﻿using Disqord.Models;
 using Qommon;
 
 namespace Disqord;
@@ -8,6 +8,9 @@ public class TransientInteractionChannel : TransientChannel, IInteractionChannel
 {
     /// <inheritdoc/>
     public Permissions AuthorPermissions => Model.Permissions.GetValueOrDefault();
+
+    /// <inheritdoc/>
+    public Permissions ApplicationPermissions => Model.AppPermissions.GetValueOrDefault();
 
     /// <inheritdoc/>
     public Snowflake? ParentId => Model.ParentId.GetValueOrDefault();

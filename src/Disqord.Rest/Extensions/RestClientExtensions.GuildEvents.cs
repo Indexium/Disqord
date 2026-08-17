@@ -117,7 +117,7 @@ public static partial class RestClientExtensions
             if (model.Member.HasValue)
             {
                 model.Member.Value.User = model.User;
-                return new TransientMember(client, guildId, model.Member.Value);
+                return new TransientRestMember(client, guildId, model.Member.Value);
             }
 
             return new TransientUser(client, model.User);

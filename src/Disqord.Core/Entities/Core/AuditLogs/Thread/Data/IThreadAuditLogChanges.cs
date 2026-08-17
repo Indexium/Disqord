@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Disqord.AuditLogs;
 
@@ -15,4 +15,8 @@ public interface IThreadAuditLogChanges
     AuditLogChange<TimeSpan> Slowmode { get; }
 
     AuditLogChange<ChannelType> Type { get; }
+
+    AuditLogChange<bool> AllowsInvitation { get; }
+
+    AuditLogChange<GuildChannelFlags> Flags { get; }
 }

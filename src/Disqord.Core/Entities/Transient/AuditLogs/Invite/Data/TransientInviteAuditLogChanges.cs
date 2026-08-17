@@ -27,6 +27,9 @@ public class TransientInviteAuditLogChanges : IInviteAuditLogChanges
     /// <inheritdoc/>
     public AuditLogChange<TimeSpan> MaxAge { get; }
 
+    /// <inheritdoc/>
+    public AuditLogChange<InviteFlags> Flags { get; }
+
     public TransientInviteAuditLogChanges(IClient client, AuditLogEntryJsonModel model)
     {
         for (var i = 0; i < model.Changes.Value.Length; i++)
@@ -67,6 +70,11 @@ public class TransientInviteAuditLogChanges : IInviteAuditLogChanges
                 case "max_age":
                 {
                     MaxAge = AuditLogChange<TimeSpan>.Convert<int>(change, x => TimeSpan.FromSeconds(x));
+                    break;
+                }
+                case "flags":
+                {
+                    Flags = AuditLogChange<InviteFlags>.Convert(change);
                     break;
                 }
                 default:

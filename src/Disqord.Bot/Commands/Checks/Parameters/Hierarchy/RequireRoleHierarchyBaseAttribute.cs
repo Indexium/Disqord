@@ -41,7 +41,8 @@ public abstract class RequireRoleHierarchyBaseAttribute : DiscordGuildParameterC
 
         if (argument is IMember memberArgument)
         {
-            if (Comparers.Roles.Compare(target.GetHighestRole(), memberArgument.GetHighestRole()) > 0)
+            var isGuildOwner = guild != null && memberArgument.Id == guild.OwnerId;
+            if (!isGuildOwner && Comparers.Roles.Compare(target.GetHighestRole(), memberArgument.GetHighestRole()) > 0)
                 return Results.Success;
         }
         else

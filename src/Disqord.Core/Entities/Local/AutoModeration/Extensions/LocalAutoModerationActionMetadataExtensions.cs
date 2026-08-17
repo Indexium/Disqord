@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 
 namespace Disqord;
@@ -17,6 +17,13 @@ public static class LocalAutoModerationActionMetadataExtensions
         where TActionMetadata : LocalAutoModerationActionMetadata
     {
         metadata.TimeoutDuration = duration;
+        return metadata;
+    }
+
+    public static TActionMetadata WithCustomMessage<TActionMetadata>(this TActionMetadata metadata, string customMessage)
+        where TActionMetadata : LocalAutoModerationActionMetadata
+    {
+        metadata.CustomMessage = customMessage;
         return metadata;
     }
 }

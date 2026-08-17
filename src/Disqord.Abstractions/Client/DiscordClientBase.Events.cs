@@ -97,6 +97,13 @@ public abstract partial class DiscordClientBase
     }
 
     /// <inheritdoc/>
+    public event AsynchronousEventHandler<CurrentThreadMemberUpdatedEventArgs> CurrentThreadMemberUpdated
+    {
+        add => GatewayClient.CurrentThreadMemberUpdated += value;
+        remove => GatewayClient.CurrentThreadMemberUpdated -= value;
+    }
+
+    /// <inheritdoc/>
     public event AsynchronousEventHandler<ThreadMembersUpdatedEventArgs> ThreadMembersUpdated
     {
         add => GatewayClient.ThreadMembersUpdated += value;

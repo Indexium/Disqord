@@ -95,7 +95,7 @@ public partial class DefaultApplicationCommandCacheProvider
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ApplicationCommandType GetCommandType(LocalApplicationCommand command)
+        internal static ApplicationCommandType GetCommandType(LocalApplicationCommand command)
         {
             return command switch
             {
@@ -121,7 +121,7 @@ public partial class DefaultApplicationCommandCacheProvider
             {
                 if (Description != slashCommand.Description
                     || !AreLocalizationsEquivalent(DescriptionLocalizations, slashCommand.DescriptionLocalizations)
-                    || !AreEqual(Options, slashCommand.Options))
+                    || !AreEquivalent(Options, slashCommand.Options))
                     return false;
             }
 
@@ -231,7 +231,7 @@ public partial class DefaultApplicationCommandCacheProvider
                 || !AreLocalizationsEquivalent(DescriptionLocalizations, option.DescriptionLocalizations)
                 || IsRequired != option.IsRequired
                 || !AreEqual(Choices, option.Choices)
-                || !AreEqual(Options, option.Options)
+                || !AreEquivalent(Options, option.Options)
                 || !AreEquivalent(ChannelTypes, option.ChannelTypes)
                 || !AreEquivalent(FileTypes, option.FileTypes)
                 || MinimumValue != option.MinimumValue

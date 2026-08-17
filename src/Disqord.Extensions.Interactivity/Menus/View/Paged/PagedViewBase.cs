@@ -80,8 +80,11 @@ public abstract class PagedViewBase : ViewBase
         var currentPage = CurrentPage;
         if (currentPage != null)
         {
-            message.Content = currentPage.Content.GetValueOrDefault();
-            message.Embeds = currentPage.Embeds.GetValueOrDefault() is IList<LocalEmbed> embeds ? embeds.ToArray() : Array.Empty<LocalEmbed>();
+            if (currentPage.Content.HasValue)
+                message.Content = currentPage.Content.Value;
+
+            if (currentPage.Embeds.HasValue)
+                message.Embeds = currentPage.Embeds.Value is IList<LocalEmbed> embeds ? embeds.ToArray() : Array.Empty<LocalEmbed>();
         }
     }
 }

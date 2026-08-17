@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Disqord.Gateway.Api.Models;
 
 namespace Disqord.Gateway.Api.Default;
@@ -7,6 +7,8 @@ public class DefaultShardConfiguration
 {
     [Required]
     public virtual GatewayIntents Intents { get; set; } = GatewayIntents.Unprivileged;
+
+    public virtual GatewayCapabilities Capabilities { get; set; } = GatewayCapabilities.None;
 
     [Range(50, 250)]
     public virtual int LargeGuildThreshold { get; set; } = 250;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Qommon;
 
 namespace Disqord;
@@ -63,6 +63,7 @@ public class LocalTextInputComponent : LocalComponent, ILocalCustomIdentifiableE
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalTextInputComponent(LocalTextInputComponent other)
+        : base(other)
     {
         Style = other.Style;
         CustomId = other.CustomId;

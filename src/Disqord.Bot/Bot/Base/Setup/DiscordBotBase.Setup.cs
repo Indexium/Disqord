@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -103,6 +103,16 @@ public abstract partial class DiscordBotBase
         if (command is ApplicationCommandBuilder applicationCommand && applicationCommand.Type is ApplicationCommandType.Slash && applicationCommand.Alias != null)
         {
             applicationCommand.Alias = GetSlashCommandName(applicationCommand.Alias);
+        }
+
+        var customAttributes = command.CustomAttributes;
+        var customAttributeCount = customAttributes.Count;
+        for (var i = 0; i < customAttributeCount; i++)
+        {
+            if (customAttributes[i] is AutoCompleteAttribute autoCompleteAttribute)
+            {
+                autoCompleteAttribute.Alias = GetSlashCommandName(autoCompleteAttribute.Alias);
+            }
         }
     }
 

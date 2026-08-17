@@ -2,11 +2,75 @@
 using Disqord.Models;
 using Disqord.Serialization.Json;
 using Disqord.Tests.Serialization;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Disqord.Tests.Unit.ApplicationCommands;
 
 public class DefaultApplicationCommandCacheProviderTests : SerializationTestBase
 {
+    [Test]
+    public async Task DisposeCacheAsync_CacheFileDoesNotExist_CreatesFileWithoutLeavingTemporaryFileBehind()
+    {
+        // Arrange
+        var directoryPath = Path.Combine(Path.GetTempPath(), $"disqord-cache-test-{Guid.NewGuid():N}");
+        var configuration = new DefaultApplicationCommandCacheProviderConfiguration
+        {
+            DirectoryPath = directoryPath
+        };
+
+        var provider = new DefaultApplicationCommandCacheProvider(
+            Options.Create(configuration),
+            NullLogger<DefaultApplicationCommandCacheProvider>.Instance,
+            Serializer);
+
+        try
+        {
+            // Act
+            var cache = await provider.GetCacheAsync(CancellationToken.None);
+            await cache.DisposeAsync();
+
+            // Assert
+            Assert.That(File.Exists(provider.FilePath), Is.True);
+            Assert.That(File.Exists(provider.TemporaryFilePath), Is.False);
+        }
+        finally
+        {
+            Directory.Delete(directoryPath, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task DisposeCacheAsync_CacheFileDoesNotExistAndTemporaryFileIsBlocked_DoesNotWriteDirectlyToTheRealFile()
+    {
+        // Arrange
+        var directoryPath = Path.Combine(Path.GetTempPath(), $"disqord-cache-test-{Guid.NewGuid():N}");
+        var configuration = new DefaultApplicationCommandCacheProviderConfiguration
+        {
+            DirectoryPath = directoryPath
+        };
+
+        var provider = new DefaultApplicationCommandCacheProvider(
+            Options.Create(configuration),
+            NullLogger<DefaultApplicationCommandCacheProvider>.Instance,
+            Serializer);
+
+        try
+        {
+            var cache = await provider.GetCacheAsync(CancellationToken.None);
+
+            Directory.CreateDirectory(provider.TemporaryFilePath);
+
+            // Act & Assert
+            Assert.That(async () => await cache.DisposeAsync(), Throws.InstanceOf<InvalidOperationException>());
+            Assert.That(File.Exists(provider.FilePath), Is.False);
+        }
+        finally
+        {
+            Directory.Delete(directoryPath, recursive: true);
+        }
+    }
+
     [Test]
     public void NumericValue_RoundTrippedAndCompared_AreEqual()
     {
@@ -105,6 +169,76 @@ public class DefaultApplicationCommandCacheProviderTests : SerializationTestBase
 
         // Act
         var equal = model.Equals(changedOption);
+
+        // Assert
+        Assert.That(equal, Is.False);
+    }
+
+    [Test]
+    public void CommandOptions_SubcommandsReordered_AreEqual()
+    {
+        // Arrange
+        var command = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "alpha", Description = "Alpha." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+            },
+        };
+
+        var model = new DefaultApplicationCommandCacheProvider.CommandJsonModel(command, Serializer);
+
+        var reorderedCommand = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "alpha", Description = "Alpha." },
+            },
+        };
+
+        // Act
+        var equal = model.Equals(reorderedCommand);
+
+        // Assert
+        Assert.That(equal, Is.True);
+    }
+
+    [Test]
+    public void CommandOptions_SubcommandContentChanged_AreNotEqual()
+    {
+        // Arrange
+        var command = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "alpha", Description = "Alpha." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+            },
+        };
+
+        var model = new DefaultApplicationCommandCacheProvider.CommandJsonModel(command, Serializer);
+
+        var changedCommand = new LocalSlashCommand
+        {
+            Name = "group",
+            Description = "A group.",
+            Options = new List<LocalSlashCommandOption>
+            {
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "beta", Description = "Beta." },
+                new() { Type = SlashCommandOptionType.Subcommand, Name = "gamma", Description = "Gamma." },
+            },
+        };
+
+        // Act
+        var equal = model.Equals(changedCommand);
 
         // Assert
         Assert.That(equal, Is.False);

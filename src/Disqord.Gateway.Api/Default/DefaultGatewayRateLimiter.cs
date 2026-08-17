@@ -74,12 +74,13 @@ public class DefaultGatewayRateLimiter : IGatewayRateLimiter
     /// <inheritdoc/>
     public async Task WaitAsync(GatewayPayloadOperation? operation = null, CancellationToken cancellationToken = default)
     {
+        Bucket? bucket = null;
         if (operation != null)
         {
             if (operation.Value == GatewayPayloadOperation.Heartbeat)
                 return;
 
-            var bucket = _buckets.GetValueOrDefault(operation.Value);
+            bucket = _buckets.GetValueOrDefault(operation.Value);
             if (bucket != null)
                 await bucket.WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -88,7 +89,15 @@ public class DefaultGatewayRateLimiter : IGatewayRateLimiter
                 return;
         }
 
-        await _masterBucket.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _masterBucket.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            bucket?.Release();
+            throw;
+        }
     }
 
     /// <inheritdoc/>

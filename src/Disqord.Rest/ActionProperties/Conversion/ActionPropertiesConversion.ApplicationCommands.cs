@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using Disqord.Serialization.Json;
 using Qommon;
@@ -21,7 +21,7 @@ internal static partial class ActionPropertiesConversion
             Description = properties.Description,
             DescriptionLocalizations = Optional.Convert(properties.DescriptionLocalizations, localizations => localizations.ToDictionary(x => x.Key.Name, x => x.Value)),
             Options = Optional.Convert(properties.Options, options => options?.Select(option => option.ToModel(serializer)).ToArray())!,
-            DefaultMemberPermissions = Optional.Convert(properties.DefaultRequiredMemberPermissions, defaultMemberPermissions => (Permissions?) defaultMemberPermissions),
+            DefaultMemberPermissions = properties.DefaultRequiredMemberPermissions,
             DmPermission = properties.IsEnabledInPrivateChannels,
             DefaultPermission = properties.IsEnabledByDefault,
             Nsfw = properties.IsAgeRestricted

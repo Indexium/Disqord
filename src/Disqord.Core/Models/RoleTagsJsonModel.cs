@@ -13,4 +13,13 @@ public class RoleTagsJsonModel : JsonModel
 
     [JsonProperty("premium_subscriber")]
     public Optional<bool?> PremiumSubscriber;
+
+    [JsonProperty("subscription_listing_id")]
+    public Optional<Snowflake> SubscriptionListingId;
+
+    [JsonProperty("available_for_purchase")]
+    public Optional<bool?> AvailableForPurchase;
+
+    [JsonProperty("guild_connections")]
+    public Optional<bool?> GuildConnections;
 }

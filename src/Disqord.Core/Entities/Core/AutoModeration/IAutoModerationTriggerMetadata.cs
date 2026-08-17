@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Disqord.Models;
 
 namespace Disqord;
@@ -12,7 +12,7 @@ public interface IAutoModerationTriggerMetadata : IEntity, IJsonUpdatable<AutoMo
     ///     Gets the list of keywords to match in message content.
     /// </summary>
     /// <remarks>
-    ///     Used by the <see cref="AutoModerationRuleTrigger.Keyword"/> trigger type.
+    ///     Used by the <see cref="AutoModerationRuleTrigger.Keyword"/> and <see cref="AutoModerationRuleTrigger.MemberProfile"/> trigger types.
     /// </remarks>
     IReadOnlyList<string> Keywords { get; }
 
@@ -20,7 +20,7 @@ public interface IAutoModerationTriggerMetadata : IEntity, IJsonUpdatable<AutoMo
     ///     Gets the list of regex patterns to match in message content.
     /// </summary>
     /// <remarks>
-    ///     Used by the <see cref="AutoModerationRuleTrigger.Keyword"/> trigger type.
+    ///     Used by the <see cref="AutoModerationRuleTrigger.Keyword"/> and <see cref="AutoModerationRuleTrigger.MemberProfile"/> trigger types.
     /// </remarks>
     IReadOnlyList<string> RegexPatterns { get; }
 
@@ -36,7 +36,7 @@ public interface IAutoModerationTriggerMetadata : IEntity, IJsonUpdatable<AutoMo
     ///     Gets the list of substrings not to match in message content.
     /// </summary>
     /// <remarks>
-    ///     Used by the <see cref="AutoModerationRuleTrigger.KeywordPreset"/> trigger type.
+    ///     Used by the <see cref="AutoModerationRuleTrigger.Keyword"/>, <see cref="AutoModerationRuleTrigger.KeywordPreset"/>, and <see cref="AutoModerationRuleTrigger.MemberProfile"/> trigger types.
     /// </remarks>
     IReadOnlyList<string> AllowedSubstrings { get; }
 

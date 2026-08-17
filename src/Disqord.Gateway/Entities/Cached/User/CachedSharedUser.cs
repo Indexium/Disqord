@@ -32,6 +32,12 @@ public class CachedSharedUser : CachedUser, ICachedSharedUser
     public override IUserPrimaryGuild? PrimaryGuild => _primaryGuild;
 
     /// <inheritdoc/>
+    public override IAvatarDecoration? AvatarDecoration => _avatarDecoration;
+
+    /// <inheritdoc/>
+    public override ICollectibles? Collectibles => _collectibles;
+
+    /// <inheritdoc/>
     public int ReferenceCount => _referenceCount;
 
     private string _name = null!;
@@ -41,6 +47,8 @@ public class CachedSharedUser : CachedUser, ICachedSharedUser
     private readonly bool _isBot;
     private UserFlags _publicFlags;
     private IUserPrimaryGuild? _primaryGuild;
+    private IAvatarDecoration? _avatarDecoration;
+    private ICollectibles? _collectibles;
     private int _referenceCount;
 
     /// <summary>
@@ -70,6 +78,12 @@ public class CachedSharedUser : CachedUser, ICachedSharedUser
 
         if (model.PrimaryGuild.HasValue)
             _primaryGuild = model.PrimaryGuild.Value != null ? new TransientUserPrimaryGuild(model.PrimaryGuild.Value) : null;
+
+        if (model.AvatarDecorationData.HasValue)
+            _avatarDecoration = model.AvatarDecorationData.Value != null ? new TransientAvatarDecoration(model.AvatarDecorationData.Value) : null;
+
+        if (model.Collectibles.HasValue)
+            _collectibles = model.Collectibles.Value != null ? new TransientCollectibles(model.Collectibles.Value) : null;
     }
 
     /// <inheritdoc/>

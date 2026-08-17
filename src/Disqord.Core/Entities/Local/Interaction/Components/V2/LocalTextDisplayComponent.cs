@@ -20,6 +20,7 @@ public class LocalTextDisplayComponent : LocalComponent, ILocalConstruct<LocalTe
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalTextDisplayComponent(LocalTextDisplayComponent other)
+        : base(other)
     {
         Content = other.Content;
     }

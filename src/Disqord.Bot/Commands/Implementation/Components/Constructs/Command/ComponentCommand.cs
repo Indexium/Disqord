@@ -27,6 +27,8 @@ public class ComponentCommand : ICommand
 
     public IReadOnlyList<Attribute> CustomAttributes { get; }
 
+    public bool BindModalArgumentsByCustomId { get; }
+
     public MethodInfo? MethodInfo { get; }
 
     public ICommandCallback Callback { get; }
@@ -81,6 +83,18 @@ public class ComponentCommand : ICommand
         }
 
         CustomAttributes = customAttributes;
+
+        var bindModalArgumentsByCustomId = false;
+        for (var i = 0; i < customAttributes.Length; i++)
+        {
+            if (customAttributes[i] is BindModalArgumentsByCustomIdAttribute)
+            {
+                bindModalArgumentsByCustomId = true;
+                break;
+            }
+        }
+
+        BindModalArgumentsByCustomId = bindModalArgumentsByCustomId;
 
         MethodInfo = builder.MethodInfo;
         Callback = builder.Callback;

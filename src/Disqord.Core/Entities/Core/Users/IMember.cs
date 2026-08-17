@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Disqord.Models;
 using Qommon;
@@ -71,4 +71,20 @@ public interface IMember : IUser, IGuildEntity, IJsonUpdatable<MemberJsonModel>
     ///     Gets the guild-related flags of this member.
     /// </summary>
     MemberFlags GuildFlags { get; }
+
+    /// <summary>
+    ///     Gets the guild avatar decoration of this member.
+    /// </summary>
+    /// <returns>
+    ///     The guild avatar decoration or <see langword="null"/> if this member has no guild avatar decoration set.
+    /// </returns>
+    IAvatarDecoration? GuildAvatarDecoration { get; }
+
+    /// <summary>
+    ///     Gets the guild collectibles of this member.
+    /// </summary>
+    /// <returns>
+    ///     The guild collectibles or <see langword="null"/> if this member has no guild collectibles.
+    /// </returns>
+    ICollectibles? GuildCollectibles { get; }
 }

@@ -22,6 +22,7 @@ public class LocalMediaGalleryComponent : LocalComponent, ILocalConstruct<LocalM
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalMediaGalleryComponent(LocalMediaGalleryComponent other)
+        : base(other)
     {
         Items = other.Items.DeepClone();
     }

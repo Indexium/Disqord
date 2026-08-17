@@ -108,6 +108,9 @@ public class GuildJsonModel : JsonModel
     [JsonProperty("max_video_channel_users")]
     public Optional<int> MaxVideoChannelUsers;
 
+    [JsonProperty("max_stage_video_channel_users")]
+    public Optional<int> MaxStageVideoChannelUsers;
+
     [JsonProperty("approximate_member_count")]
     public Optional<int> ApproximateMemberCount;
 
@@ -128,4 +131,7 @@ public class GuildJsonModel : JsonModel
 
     [JsonProperty("safety_alerts_channel_id")]
     public Snowflake? SafetyAlertsChannelId;
+
+    [JsonProperty("incidents_data")]
+    public Optional<IncidentsDataJsonModel?> IncidentsData;
 }

@@ -112,6 +112,9 @@ public class CachedGuild : CachedSnowflakeEntity, IGatewayGuild,
     /// <inheritdoc/>
     public int? MaxVideoMemberCount { get; private set; }
 
+    /// <inheritdoc/>
+    public int? MaxStageVideoMemberCount { get; private set; }
+
     // Interface: IGatewayGuild
     /// <inheritdoc/>
     public DateTimeOffset JoinedAt { get; private set; }
@@ -148,6 +151,9 @@ public class CachedGuild : CachedSnowflakeEntity, IGatewayGuild,
 
     /// <inheritdoc/>
     public Snowflake? SafetyAlertsChannelId { get; private set; }
+
+    /// <inheritdoc/>
+    public IGuildIncidents? Incidents { get; private set; }
 
     IReadOnlyDictionary<Snowflake, IGuildChannel> IGatewayGuild.Channels
     {
@@ -251,9 +257,13 @@ public class CachedGuild : CachedSnowflakeEntity, IGatewayGuild,
         PreferredLocale = Discord.Internal.GetLocale(model.PreferredLocale);
         PublicUpdatesChannelId = model.PublicUpdatesChannelId;
         MaxVideoMemberCount = model.MaxVideoChannelUsers.GetValueOrNullable();
+        MaxStageVideoMemberCount = model.MaxStageVideoChannelUsers.GetValueOrNullable();
         NsfwLevel = model.NsfwLevel;
         IsBoostProgressBarEnabled = model.PremiumProgressBarEnabled;
         SafetyAlertsChannelId = model.SafetyAlertsChannelId;
+
+        if (model.IncidentsData.HasValue)
+            Incidents = model.IncidentsData.Value != null ? new TransientGuildIncidents(model.IncidentsData.Value) : null;
     }
 
     public void Update(GatewayGuildJsonModel model)
@@ -309,7 +319,10 @@ public class CachedGuild : CachedSnowflakeEntity, IGatewayGuild,
     private void SetStickers(Optional<StickerJsonModel[]> stickers)
     {
         if (!stickers.HasValue)
+        {
             Stickers = ReadOnlyDictionary<Snowflake, IGuildSticker>.Empty;
+            return;
+        }
 
         Stickers = stickers.Value.ToReadOnlyDictionary(Client,
             (model, _) => model.Id,

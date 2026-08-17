@@ -17,4 +17,6 @@ public interface IInviteAuditLogChanges
     AuditLogChange<bool> IsTemporary { get; }
 
     AuditLogChange<TimeSpan> MaxAge { get; }
+
+    AuditLogChange<InviteFlags> Flags { get; }
 }

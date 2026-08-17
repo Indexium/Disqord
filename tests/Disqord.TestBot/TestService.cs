@@ -22,6 +22,23 @@ namespace Disqord.TestBot
         {
             await Client.WaitUntilReadyAsync(stoppingToken);
             Logger.LogInformation("Client is ready.");
+
+            var isBeep = false;
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var activity = new LocalActivity(!isBeep ? "Beep" : "Boop", ActivityType.Playing);
+                    isBeep = !isBeep;
+                    await Bot.SetPresenceAsync(activity, stoppingToken);
+
+                    await Task.Delay(12_500, stoppingToken);
+                }
+                catch
+                {
+                    await Task.Delay(30_000, stoppingToken);
+                }
+            }
         }
 
         // Fired if the user doesn't provide a prefix or it's a system message etc.

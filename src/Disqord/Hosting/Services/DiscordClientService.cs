@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -143,13 +143,14 @@ public abstract partial class DiscordClientService : IHostedService, IDisposable
     }
 
     /// <inheritdoc/>
-    public virtual Task StopAsync(CancellationToken cancellationToken)
+    public virtual async Task StopAsync(CancellationToken cancellationToken)
     {
         if (_executeTask == null)
-            return Task.CompletedTask;
+            return;
 
         _cts?.Cancel();
-        return Task.CompletedTask;
+
+        await Task.WhenAny(_executeTask, Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken)).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

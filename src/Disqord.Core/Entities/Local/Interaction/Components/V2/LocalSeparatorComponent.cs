@@ -25,6 +25,7 @@ public class LocalSeparatorComponent : LocalComponent, ILocalConstruct<LocalSepa
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalSeparatorComponent(LocalSeparatorComponent other)
+        : base(other)
     {
         IsDivider = other.IsDivider;
         SpacingSize = other.SpacingSize;

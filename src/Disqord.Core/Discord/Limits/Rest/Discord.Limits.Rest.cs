@@ -1,4 +1,4 @@
-namespace Disqord;
+﻿namespace Disqord;
 
 public static partial class Discord
 {
@@ -56,6 +56,11 @@ public static partial class Discord
             ///     Represents the page size for fetching bans.
             /// </summary>
             public const int FetchBansPageSize = 1000;
+
+            /// <summary>
+            ///     Represents the page size (maximum users per request) for bulk banning.
+            /// </summary>
+            public const int BulkBanUsersPageSize = 200;
 
             /// <summary>
             ///     Represents the page size for fetching guilds.

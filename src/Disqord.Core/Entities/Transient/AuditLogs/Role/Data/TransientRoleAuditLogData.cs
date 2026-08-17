@@ -26,6 +26,9 @@ public class TransientRoleAuditLogData : IRoleAuditLogData
     /// <inheritdoc/>
     public Optional<string> UnicodeEmoji { get; }
 
+    /// <inheritdoc/>
+    public Optional<RoleColors?> Colors { get; }
+
     public TransientRoleAuditLogData(IClient client, AuditLogEntryJsonModel model, bool isCreated)
     {
         var changes = new TransientRoleAuditLogChanges(client, model);
@@ -38,6 +41,7 @@ public class TransientRoleAuditLogData : IRoleAuditLogData
             IconHash = changes.IconHash.NewValue;
             IsMentionable = changes.IsMentionable.NewValue;
             UnicodeEmoji = changes.UnicodeEmoji.NewValue;
+            Colors = changes.Colors.NewValue;
         }
         else
         {
@@ -48,6 +52,7 @@ public class TransientRoleAuditLogData : IRoleAuditLogData
             IconHash = changes.IconHash.OldValue;
             IsMentionable = changes.IsMentionable.OldValue;
             UnicodeEmoji = changes.UnicodeEmoji.OldValue;
+            Colors = changes.Colors.OldValue;
         }
     }
 }

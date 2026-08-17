@@ -97,14 +97,14 @@ public static class BearerClientExtensions
     /// <param name="cancellationToken"> The cancellation token to observe. </param>
     /// <returns>
     ///     A <see cref="Task{TResult}"/> representing the request
-    ///     that wraps the returned <see cref="IMember"/>.
+    ///     that wraps the returned <see cref="IRestMember"/>.
     /// </returns>
-    public static async Task<IMember> FetchCurrentGuildMemberAsync(this IBearerClient client,
+    public static async Task<IRestMember> FetchCurrentGuildMemberAsync(this IBearerClient client,
         Snowflake guildId,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
         var model = await client.RestClient.ApiClient.FetchCurrentGuildMemberAsync(guildId, options, cancellationToken).ConfigureAwait(false);
-        return new TransientMember(client.RestClient, guildId, model);
+        return new TransientRestMember(client.RestClient, guildId, model);
     }
 
     /// <summary>

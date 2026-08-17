@@ -37,9 +37,18 @@ public class MemberJsonModel : JsonModel
     [JsonProperty("avatar")]
     public Optional<string?> Avatar;
 
+    [JsonProperty("banner")]
+    public Optional<string?> Banner;
+
     [JsonProperty("communication_disabled_until")]
     public Optional<DateTimeOffset?> CommunicationDisabledUntil;
 
     [JsonProperty("flags")]
     public MemberFlags Flags;
+
+    [JsonProperty("avatar_decoration_data")]
+    public Optional<AvatarDecorationDataJsonModel?> AvatarDecorationData;
+
+    [JsonProperty("collectibles")]
+    public Optional<CollectiblesJsonModel?> Collectibles;
 }

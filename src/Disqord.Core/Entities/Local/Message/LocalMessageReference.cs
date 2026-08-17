@@ -56,6 +56,7 @@ public class LocalMessageReference : ILocalConstruct<LocalMessageReference>, IJs
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalMessageReference(LocalMessageReference other)
     {
+        Type = other.Type;
         MessageId = other.MessageId;
         ChannelId = other.ChannelId;
         GuildId = other.GuildId;

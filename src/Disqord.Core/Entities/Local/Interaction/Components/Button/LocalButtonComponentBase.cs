@@ -36,9 +36,11 @@ public abstract class LocalButtonComponentBase : LocalComponent, ILocalConstruct
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalButtonComponentBase(LocalButtonComponentBase other)
+        : base(other)
     {
         Label = other.Label;
         Emoji = other.Emoji;
+        IsDisabled = other.IsDisabled;
     }
 
     /// <inheritdoc/>

@@ -4,13 +4,14 @@ using Qommon;
 
 namespace Disqord;
 
-public class TransientRole : TransientClientEntity<RoleJsonModel>, IRole
+public class TransientRole(IClient client, Snowflake guildId, RoleJsonModel model)
+    : TransientClientEntity<RoleJsonModel>(client, model), IRole
 {
     /// <inheritdoc/>
     public Snowflake Id => Model.Id;
 
     /// <inheritdoc/>
-    public Snowflake GuildId { get; }
+    public Snowflake GuildId { get; } = guildId;
 
     /// <inheritdoc cref="INamableEntity.Name"/>
     public string Name => Model.Name;
@@ -72,9 +73,6 @@ public class TransientRole : TransientClientEntity<RoleJsonModel>, IRole
     }
     private IRoleTags? _tags;
 
-    public TransientRole(IClient client, Snowflake guildId, RoleJsonModel model)
-        : base(client, model)
-    {
-        GuildId = guildId;
-    }
+    /// <inheritdoc/>
+    public RoleFlags Flags => Model.Flags;
 }

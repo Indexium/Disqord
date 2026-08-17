@@ -55,4 +55,10 @@ public class UserJsonModel : JsonModel
 
     [JsonProperty("primary_guild")]
     public Optional<UserPrimaryGuildJsonModel?> PrimaryGuild;
+
+    [JsonProperty("avatar_decoration_data")]
+    public Optional<AvatarDecorationDataJsonModel?> AvatarDecorationData;
+
+    [JsonProperty("collectibles")]
+    public Optional<CollectiblesJsonModel?> Collectibles;
 }

@@ -138,7 +138,7 @@ public static partial class RestEntityExtensions
         return client.FetchActiveThreadsAsync(guild.Id, options, cancellationToken);
     }
 
-    public static Task<IMember?> FetchMemberAsync(this IGuild guild,
+    public static Task<IRestMember?> FetchMemberAsync(this IGuild guild,
         Snowflake memberId,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -179,7 +179,7 @@ public static partial class RestEntityExtensions
         return client.SetCurrentMemberNickAsync(guild.Id, nick, options, cancellationToken);
     }
 
-    public static Task<IMember> ModifyMemberAsync(this IGuild guild,
+    public static Task<IRestMember> ModifyMemberAsync(this IGuild guild,
         Snowflake memberId, Action<ModifyMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -187,7 +187,7 @@ public static partial class RestEntityExtensions
         return client.ModifyMemberAsync(guild.Id, memberId, action, options, cancellationToken);
     }
 
-    public static Task<IMember> ModifyCurrentMemberAsync(this IGuild guild,
+    public static Task<IRestMember> ModifyCurrentMemberAsync(this IGuild guild,
         Action<ModifyCurrentMemberActionProperties> action,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -249,6 +249,22 @@ public static partial class RestEntityExtensions
     {
         var client = guild.GetRestClient();
         return client.CreateBanAsync(guild.Id, userId, reason, deleteMessageDuration, options, cancellationToken);
+    }
+
+    public static IPagedEnumerable<IBulkBanResponse> EnumerateBanCreation(this IGuild guild,
+        IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null)
+    {
+        var client = guild.GetRestClient();
+        return client.EnumerateBanCreation(guild.Id, userIds, deleteMessageDuration, options);
+    }
+
+    public static Task<IBulkBanResponse> CreateBansAsync(this IGuild guild,
+        IEnumerable<Snowflake> userIds, TimeSpan? deleteMessageDuration = null,
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var client = guild.GetRestClient();
+        return client.CreateBansAsync(guild.Id, userIds, deleteMessageDuration, options, cancellationToken);
     }
 
     public static Task DeleteBanAsync(this IGuild guild,

@@ -34,6 +34,27 @@ public class TransientChannelAuditLogData : IChannelAuditLogData
     /// <inheritdoc/>
     public Optional<string?> Region { get; }
 
+    /// <inheritdoc/>
+    public Optional<GuildChannelFlags> Flags { get; }
+
+    /// <inheritdoc/>
+    public Optional<VideoQualityMode> VideoQualityMode { get; }
+
+    /// <inheritdoc/>
+    public Optional<TimeSpan> DefaultAutomaticArchiveDuration { get; }
+
+    /// <inheritdoc/>
+    public Optional<TimeSpan> DefaultThreadSlowmode { get; }
+
+    /// <inheritdoc/>
+    public Optional<IReadOnlyList<IForumTag>> AvailableTags { get; }
+
+    /// <inheritdoc/>
+    public Optional<IEmoji?> DefaultReactionEmoji { get; }
+
+    /// <inheritdoc/>
+    public Optional<string?> Template { get; }
+
     public TransientChannelAuditLogData(IClient client, AuditLogEntryJsonModel model, bool isCreated)
     {
         var changes = new TransientChannelAuditLogChanges(client, model);
@@ -48,6 +69,13 @@ public class TransientChannelAuditLogData : IChannelAuditLogData
             Slowmode = changes.Slowmode.NewValue;
             Type = changes.Type.NewValue;
             Region = changes.Region.NewValue;
+            Flags = changes.Flags.NewValue;
+            VideoQualityMode = changes.VideoQualityMode.NewValue;
+            DefaultAutomaticArchiveDuration = changes.DefaultAutomaticArchiveDuration.NewValue;
+            DefaultThreadSlowmode = changes.DefaultThreadSlowmode.NewValue;
+            AvailableTags = changes.AvailableTags.NewValue;
+            DefaultReactionEmoji = changes.DefaultReactionEmoji.NewValue;
+            Template = changes.Template.NewValue;
         }
         else
         {
@@ -60,6 +88,13 @@ public class TransientChannelAuditLogData : IChannelAuditLogData
             Slowmode = changes.Slowmode.OldValue;
             Type = changes.Type.OldValue;
             Region = changes.Region.OldValue;
+            Flags = changes.Flags.OldValue;
+            VideoQualityMode = changes.VideoQualityMode.OldValue;
+            DefaultAutomaticArchiveDuration = changes.DefaultAutomaticArchiveDuration.OldValue;
+            DefaultThreadSlowmode = changes.DefaultThreadSlowmode.OldValue;
+            AvailableTags = changes.AvailableTags.OldValue;
+            DefaultReactionEmoji = changes.DefaultReactionEmoji.OldValue;
+            Template = changes.Template.OldValue;
         }
     }
 }

@@ -27,6 +27,7 @@ public class LocalSectionComponent : LocalComponent, ILocalComponentContainer, I
     /// </summary>
     /// <param name="other"> The other instance to copy properties from. </param>
     protected LocalSectionComponent(LocalSectionComponent other)
+        : base(other)
     {
         Components = other.Components.DeepClone();
         Accessory = other.Accessory.Clone();
