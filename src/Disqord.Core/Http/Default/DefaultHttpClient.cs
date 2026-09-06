@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +27,9 @@ public sealed partial class DefaultHttpClient : IHttpClient
 
         using (var requestMessage = GetHttpMessage(request))
         {
+            // HttpClient.SendAsync does not apply these defaults to an explicitly-created message.
+            requestMessage.Version = _http.DefaultRequestVersion;
+            requestMessage.VersionPolicy = _http.DefaultVersionPolicy;
             var responseMessage = await _http.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
             return new DefaultHttpResponse(responseMessage);
         }
