@@ -56,8 +56,34 @@ public static partial class RestClientExtensions
         Snowflake applicationId, IEnumerable<LocalApplicationCommand> commands,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
-        var contents = commands.Select(command => command.ToContent(client.ApiClient.Serializer)).ToArray();
-        var models = await client.ApiClient.SetGlobalApplicationCommandsAsync(applicationId, contents, options, cancellationToken).ConfigureAwait(false);
+        var contents = commands.Select(command => command.ToContent(client.ApiClient.Serializer)).ToList();
+
+        // Discord refuses a bulk overwrite that leaves out the application's Entry Point command, which it creates
+        // when Activities are enabled, so the existing one is carried over as it was fetched.
+        if (!contents.Any(content => content.Type.HasValue && content.Type.Value == ApplicationCommandType.PrimaryEntryPoint))
+        {
+            var existing = await client.ApiClient.FetchGlobalApplicationCommandsAsync(applicationId, true, options, cancellationToken).ConfigureAwait(false);
+            foreach (var model in existing)
+            {
+                if (!model.Type.HasValue || model.Type.Value != ApplicationCommandType.PrimaryEntryPoint)
+                    continue;
+
+                contents.Add(new CreateApplicationCommandJsonRestRequestContent
+                {
+                    Name = model.Name,
+                    NameLocalizations = model.NameLocalizations,
+                    Description = model.Description,
+                    DescriptionLocalizations = model.DescriptionLocalizations,
+                    DefaultMemberPermissions = model.DefaultMemberPermissions,
+                    Nsfw = model.Nsfw,
+                    Type = model.Type,
+                    // The handler, contexts and integration types have no typed fields and ride along as extension data.
+                    ExtensionData = model.ExtensionData
+                });
+            }
+        }
+
+        var models = await client.ApiClient.SetGlobalApplicationCommandsAsync(applicationId, contents.ToArray(), options, cancellationToken).ConfigureAwait(false);
         return models.ToReadOnlyList(client, (model, client) => TransientApplicationCommand.Create(client, model));
     }
 

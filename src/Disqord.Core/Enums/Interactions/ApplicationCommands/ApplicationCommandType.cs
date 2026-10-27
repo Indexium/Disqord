@@ -18,5 +18,10 @@ public enum ApplicationCommandType : byte
     /// <summary>
     ///     A UI based command that shows up in a message context menu.
     /// </summary>
-    Message = 3
+    Message = 3,
+
+    /// <summary>
+    ///     The command that launches the application's Activity. Discord creates it when Activities are enabled.
+    /// </summary>
+    PrimaryEntryPoint = 4
 }
