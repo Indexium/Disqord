@@ -39,7 +39,8 @@ public static partial class RestClientExtensions
                 }).ToArray())
             };
         }
-        else if (response is LocalInteractionMessageResponse messageResponse)
+        else if (response is LocalInteractionMessageResponse messageResponse
+            && response.Type is not (InteractionResponseType.Pong or InteractionResponseType.PremiumRequired or InteractionResponseType.LaunchActivity))
         {
             content.Data = new InteractionCallbackMessageDataJsonModel
             {

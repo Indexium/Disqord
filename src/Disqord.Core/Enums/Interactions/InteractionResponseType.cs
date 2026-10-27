@@ -19,5 +19,7 @@ public enum InteractionResponseType
 
     Modal = 9,
 
-    PremiumRequired = 10
+    PremiumRequired = 10,
+
+    LaunchActivity = 12
 }

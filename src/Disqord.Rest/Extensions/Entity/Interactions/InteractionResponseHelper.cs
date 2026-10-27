@@ -92,6 +92,31 @@ public class InteractionResponseHelper
     }
 
     /// <summary>
+    ///     Responds to the interaction by sending an <see cref="InteractionResponseType.LaunchActivity"/> response,
+    ///     i.e. launches the application's Activity for the user.
+    /// </summary>
+    /// <remarks>
+    ///     The application must have Activities enabled; modal submissions cannot launch an Activity.
+    /// </remarks>
+    /// <param name="options"> The request options. </param>
+    /// <param name="cancellationToken"> The cancellation token to observe. </param>
+    /// <returns>
+    ///     A <see cref="Task"/> representing the request.
+    /// </returns>
+    public async Task LaunchActivityAsync(
+        IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        ThrowIfInvalid();
+
+        var response = new LocalInteractionMessageResponse
+        {
+            Type = InteractionResponseType.LaunchActivity
+        };
+
+        await CreateResponseAsync(response, withCallbackResponse: false, options, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     ///     Responds to the interaction by sending an <see cref="InteractionResponseType.DeferredChannelMessage"/>
     ///     or <see cref="InteractionResponseType.DeferredMessageUpdate"/> based on the interaction type,
     ///     i.e. acknowledges the interaction and allows sending followups.
