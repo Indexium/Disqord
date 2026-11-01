@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Disqord.Http;
 using Disqord.Serialization.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -49,18 +50,23 @@ public class DefaultRestApiClient : IRestApiClient
         IRestRequestContent? content = null,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
     {
-        var stream = await InternalExecuteAsync(route, content, options, cancellationToken).ConfigureAwait(false);
-        await stream.DisposeAsync().ConfigureAwait(false);
+        _ = await InternalExecuteAsync(route, content, options, readResponseBody: false, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc/>
     public async Task<TModel> ExecuteAsync<TModel>(IFormattedRoute route,
         IRestRequestContent? content = null,
         IRestRequestOptions? options = null, CancellationToken cancellationToken = default)
         where TModel : class
     {
-        var jsonStream = await InternalExecuteAsync(route, content, options, cancellationToken).ConfigureAwait(false);
+        var jsonStream = await InternalExecuteAsync(route, content, options, readResponseBody: true, cancellationToken).ConfigureAwait(false);
         try
         {
+            if (jsonStream == null)
+            {
+                return null!;
+            }
+
             if (typeof(TModel) == typeof(string))
             {
                 var reader = new StreamReader(jsonStream, Encoding.UTF8);
@@ -71,13 +77,17 @@ public class DefaultRestApiClient : IRestApiClient
         }
         finally
         {
-            await jsonStream.DisposeAsync().ConfigureAwait(false);
+            if (jsonStream != null)
+            {
+                await jsonStream.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 
-    private async ValueTask<Stream> InternalExecuteAsync(IFormattedRoute route,
+    private async ValueTask<Stream?> InternalExecuteAsync(IFormattedRoute route,
         IRestRequestContent? content,
         IRestRequestOptions? options,
+        bool readResponseBody,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -92,15 +102,19 @@ public class DefaultRestApiClient : IRestApiClient
             var response = await RateLimiter.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
             defaultOptions?.HeadersAction?.Invoke(new DefaultRestResponseHeaders(response.HttpResponse.Headers));
 
-            var responseStream = await response.HttpResponse.ReadAsync(cancellationToken).ConfigureAwait(false);
+            if (response.HttpResponse.StatusCode.IsSuccess())
+            {
+                return readResponseBody && response.HttpResponse.StatusCode != HttpResponseStatusCode.NoContent
+                    ? await response.HttpResponse.ReadAsync(cancellationToken).ConfigureAwait(false)
+                    : null;
+            }
 
-            var statusCode = (int) response.HttpResponse.StatusCode;
-            if (statusCode > 199 && statusCode < 300)
-                return responseStream;
-
-            if (statusCode > 499 && statusCode < 600)
+            if (response.HttpResponse.StatusCode.IsServerError())
+            {
                 throw new RestApiException(response.HttpResponse, response.HttpResponse.ReasonPhrase, null);
+            }
 
+            var responseStream = await response.HttpResponse.ReadAsync(cancellationToken).ConfigureAwait(false);
             RestApiErrorJsonModel? errorModel = null;
             try
             {

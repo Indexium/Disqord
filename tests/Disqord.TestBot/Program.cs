@@ -1,6 +1,8 @@
 using System;
 using Disqord.Bot.Hosting;
 using Disqord.Gateway;
+using Disqord.Rest.Api.Default;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
@@ -23,8 +25,14 @@ namespace Disqord.TestBot
                     Token = host.Configuration["DISQORD_TOKEN"],
                     UseMentionPrefix = false,
                     Prefixes = ["??"],
-                    Intents = GatewayIntents.LibraryRecommended | GatewayIntents.DirectMessages | GatewayIntents.DirectReactions
+                    Intents = GatewayIntents.LibraryRecommended | GatewayIntents.DirectMessages | GatewayIntents.DirectReactions,
+                    AutomaticMemberChunking = new AutomaticMemberChunkingConfiguration
+                    {
+                        IsEnabled = true,
+                    },
                 });
+
+                host.Services.Configure<DefaultRestRateLimiterConfiguration>(static restRateLimiter => restRateLimiter.SendsSameBucketRequestsConcurrently = true);
 
                 host.Build().Run();
             }
